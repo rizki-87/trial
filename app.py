@@ -2,11 +2,9 @@ import streamlit as st
 import tempfile
 from pathlib import Path
 from pptx import Presentation
-from spellchecker import SpellChecker
 import language_tool_python
 import csv
 import re
-import string
 
 # LanguageTool API initialization
 def initialize_language_tool():
@@ -18,19 +16,10 @@ def initialize_language_tool():
 
 grammar_tool = initialize_language_tool()
 
-# Function for fallback grammar check using regex
-def fallback_grammar_check(text):
-    # Common regex patterns for simple grammar issues
-    missing_verb_pattern = r"\b(can|could|should|would|may|might|must)\s+\b(\w+)\b(?!\s+be)"  # Missing 'be' after modals
-    matches = re.findall(missing_verb_pattern, text, flags=re.IGNORECASE)
-    if matches:
-        return "Potential missing verb detected", f"Suggestion: {text.replace(matches[0][1], f'{matches[0][1]} be')}"
-    return None, text
-
-# Combined grammar and spelling validation function
-def validate_combined(input_ppt):
+# Function to validate grammar and spelling using LanguageTool
+def validate_language_tool(input_ppt):
     presentation = Presentation(input_ppt)
-    combined_issues = []
+    language_issues = []
 
     for slide_index, slide in enumerate(presentation.slides, start=1):
         for shape in slide.shapes:
@@ -39,53 +28,18 @@ def validate_combined(input_ppt):
                     for run in paragraph.runs:
                         text = run.text.strip()
                         if text:
-                            # Grammar check using LanguageTool
+                            # Use LanguageTool to check for grammar and spelling issues
                             if grammar_tool:
                                 matches = grammar_tool.check(text)
                                 if matches:
-                                    corrected = language_tool_python.utils.correct(text, matches)
-                                    combined_issues.append({
+                                    corrected_text = language_tool_python.utils.correct(text, matches)
+                                    language_issues.append({
                                         'slide': slide_index,
-                                        'issue': 'Grammatical error',
+                                        'issue': 'Grammar or Spelling Error',
                                         'text': text,
-                                        'corrected': corrected
+                                        'corrected': corrected_text
                                     })
-                            # Fallback grammar check with regex
-                            fallback_issue, fallback_suggestion = fallback_grammar_check(text)
-                            if fallback_issue:
-                                combined_issues.append({
-                                    'slide': slide_index,
-                                    'issue': fallback_issue,
-                                    'text': text,
-                                    'corrected': fallback_suggestion
-                                })
-
-                            # Spelling check
-                            misspellings = detect_misspellings(text)
-                            for original_word, correction in misspellings.items():
-                                combined_issues.append({
-                                    'slide': slide_index,
-                                    'issue': 'Misspelling',
-                                    'text': f"Original: {original_word}",
-                                    'corrected': f"Suggestion: {correction}"
-                                })
-    return combined_issues
-
-# Function to detect and correct misspellings
-def detect_misspellings(text):
-    spell = SpellChecker()
-    words = text.split()
-    misspellings = {}
-
-    for word in words:
-        # Remove punctuation from the word for checking
-        clean_word = word.strip(string.punctuation)
-        if clean_word and clean_word.lower() not in spell:
-            correction = spell.correction(clean_word)
-            if correction:
-                misspellings[word] = correction
-
-    return misspellings
+    return language_issues
 
 # Function to validate fonts in a presentation
 def validate_fonts(input_ppt, default_font):
@@ -165,9 +119,9 @@ def main():
 
             font_issues = validate_fonts(temp_ppt_path, default_font)
             punctuation_issues = validate_punctuation(temp_ppt_path)
-            combined_issues = validate_combined(temp_ppt_path)
+            language_issues = validate_language_tool(temp_ppt_path)
 
-            all_issues = font_issues + punctuation_issues + combined_issues
+            all_issues = font_issues + punctuation_issues + language_issues
             save_to_csv(all_issues, csv_output_path)
 
             st.success("Validation completed!")
@@ -176,4 +130,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
