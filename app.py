@@ -5,6 +5,7 @@ from pptx import Presentation
 import language_tool_python
 import csv
 import re
+import string
 
 # LanguageTool API initialization
 def initialize_language_tool():
@@ -16,22 +17,10 @@ def initialize_language_tool():
 
 grammar_tool = initialize_language_tool()
 
-# Function to validate punctuation issues
-def detect_punctuation_issues(text):
-    excessive_punctuation_pattern = r"([!?.:,;]{2,})"  # Two or more punctuation marks
-    repeated_word_pattern = r"\b(\w+)\s+\1\b"  # Repeated words (e.g., "the the")
-    
-    if re.search(excessive_punctuation_pattern, text):
-        return "Punctuation Issue", "Excessive punctuation marks detected"
-    if re.search(repeated_word_pattern, text, flags=re.IGNORECASE):
-        return "Punctuation Issue", "Repeated words detected"
-    
-    return None, None
-
-# Function to validate grammar and spelling using LanguageTool
-def validate_language_tool(input_ppt):
+# Updated validate_combined function
+def validate_combined(input_ppt):
     presentation = Presentation(input_ppt)
-    language_issues = []
+    combined_issues = []
 
     for slide_index, slide in enumerate(presentation.slides, start=1):
         for shape in slide.shapes:
@@ -40,29 +29,32 @@ def validate_language_tool(input_ppt):
                     for run in paragraph.runs:
                         text = run.text.strip()
                         if text:
-                            # Check for punctuation issues first
-                            punctuation_issue, punctuation_correction = detect_punctuation_issues(text)
-                            if punctuation_issue:
-                                language_issues.append({
-                                    'slide': slide_index,
-                                    'issue': punctuation_issue,
-                                    'text': text,
-                                    'corrected': punctuation_correction
-                                })
-                                continue  # Skip further checks for punctuation issues
-
-                            # Use LanguageTool to check for grammar and spelling issues
+                            # Grammar or Spelling Check
                             if grammar_tool:
                                 matches = grammar_tool.check(text)
                                 if matches:
-                                    corrected_text = language_tool_python.utils.correct(text, matches)
-                                    language_issues.append({
-                                        'slide': slide_index,
-                                        'issue': 'Grammar or Spelling Error',
-                                        'text': text,
-                                        'corrected': corrected_text
-                                    })
-    return language_issues
+                                    corrected = language_tool_python.utils.correct(text, matches)
+                                    if corrected != text:  # Only log if correction is made
+                                        combined_issues.append({
+                                            'slide': slide_index,
+                                            'issue': 'Grammar or Spelling Error',
+                                            'text': text,
+                                            'corrected': corrected
+                                        })
+
+                            # Punctuation Check (Excessive Punctuation)
+                            excessive_punctuation_pattern = r"([!?.:,;]{2,})"
+                            match = re.search(excessive_punctuation_pattern, text)
+                            if match:
+                                punctuation_marks = match.group(1)
+                                combined_issues.append({
+                                    'slide': slide_index,
+                                    'issue': 'Punctuation Issue',
+                                    'text': text,
+                                    'corrected': f"Excessive punctuation marks detected ({punctuation_marks})"
+                                })
+
+    return combined_issues
 
 # Function to validate fonts in a presentation
 def validate_fonts(input_ppt, default_font):
@@ -83,6 +75,39 @@ def validate_fonts(input_ppt, default_font):
                                     'corrected': f"Expected font: {default_font}"
                                 })
     return font_issues
+
+# Function to detect punctuation issues
+def validate_punctuation(input_ppt):
+    presentation = Presentation(input_ppt)
+    punctuation_issues = []
+
+    excessive_punctuation_pattern = r"([!?.:,;]{2,})"
+    repeated_word_pattern = r"\b(\w+)\s+\1\b"
+
+    for slide_index, slide in enumerate(presentation.slides, start=1):
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                for paragraph in shape.text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        text = run.text.strip()
+                        if text:
+                            if re.search(excessive_punctuation_pattern, text):
+                                punctuation_issues.append({
+                                    'slide': slide_index,
+                                    'issue': 'Punctuation Issue',
+                                    'text': text,
+                                    'corrected': "Excessive punctuation marks detected"
+                                })
+
+                            if re.search(repeated_word_pattern, text, flags=re.IGNORECASE):
+                                punctuation_issues.append({
+                                    'slide': slide_index,
+                                    'issue': 'Punctuation Issue',
+                                    'text': text,
+                                    'corrected': "Repeated words detected"
+                                })
+
+    return punctuation_issues
 
 # Function to save issues to CSV
 def save_to_csv(issues, output_csv):
@@ -108,9 +133,9 @@ def main():
             csv_output_path = Path(tmpdir) / "validation_report.csv"
 
             font_issues = validate_fonts(temp_ppt_path, default_font)
-            language_issues = validate_language_tool(temp_ppt_path)
+            combined_issues = validate_combined(temp_ppt_path)
 
-            all_issues = font_issues + language_issues
+            all_issues = font_issues + combined_issues
             save_to_csv(all_issues, csv_output_path)
 
             st.success("Validation completed!")
