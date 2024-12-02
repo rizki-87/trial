@@ -7,7 +7,6 @@ import csv
 import re
 import string
 
-
 # LanguageTool API initialization
 def initialize_language_tool():
     try:
@@ -16,30 +15,26 @@ def initialize_language_tool():
         st.error(f"LanguageTool initialization failed: {e}")
         return None
 
-
 grammar_tool = initialize_language_tool()
 
-
-# Fallback spelling checker using regex
+# Fallback spelling check for redundancy
 def fallback_spelling_check(text):
-    # Simple spelling corrections as an example
-    fallback_corrections = {
-        "speling": "spelling",
+    common_misspellings = {
         "sentense": "sentence",
+        "speling": "spelling",
         "misteaks": "mistakes",
+        "commmon": "common",
         "intersting": "interesting",
-        "commmon": "common"
     }
+    misspellings = {}
     words = text.split()
-    corrections = {}
     for word in words:
         clean_word = word.strip(string.punctuation)
-        if clean_word.lower() in fallback_corrections:
-            corrections[word] = fallback_corrections[clean_word.lower()]
-    return corrections
+        if clean_word in common_misspellings:
+            misspellings[word] = common_misspellings[clean_word]
+    return misspellings
 
-
-# Updated validate_combined function
+# Updated validate_combined function for enhanced grammar checks
 def validate_combined(input_ppt):
     presentation = Presentation(input_ppt)
     combined_issues = []
@@ -88,7 +83,6 @@ def validate_combined(input_ppt):
 
     return combined_issues
 
-
 # Function to validate fonts in a presentation
 def validate_fonts(input_ppt, default_font):
     presentation = Presentation(input_ppt)
@@ -109,14 +103,12 @@ def validate_fonts(input_ppt, default_font):
                                 })
     return font_issues
 
-
 # Function to save issues to CSV
 def save_to_csv(issues, output_csv):
     with open(output_csv, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.DictWriter(file, fieldnames=['slide', 'issue', 'text', 'corrected'])
         writer.writeheader()
         writer.writerows(issues)
-
 
 # Main Streamlit app
 def main():
@@ -143,7 +135,6 @@ def main():
             st.success("Validation completed!")
             st.download_button("Download Validation Report (CSV)", csv_output_path.read_bytes(),
                                file_name="validation_report.csv")
-
 
 if __name__ == "__main__":
     main()
