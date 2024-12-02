@@ -2,11 +2,13 @@ import streamlit as st
 import tempfile
 from pathlib import Path
 from pptx import Presentation
+from spellchecker import SpellChecker
 import language_tool_python
 import csv
 import re
+import string
 
-# LanguageTool API initialization
+# Initialize LanguageTool
 def initialize_language_tool():
     try:
         return language_tool_python.LanguageToolPublicAPI('en-US')  # Use Public API mode
@@ -16,7 +18,22 @@ def initialize_language_tool():
 
 grammar_tool = initialize_language_tool()
 
-# Updated validate_combined function
+# Fallback spelling checker using pyspellchecker
+def fallback_spelling_check(text):
+    spell = SpellChecker()
+    words = text.split()
+    misspellings = {}
+
+    for word in words:
+        clean_word = word.strip(string.punctuation)
+        if clean_word and clean_word.lower() not in spell:
+            correction = spell.correction(clean_word)
+            if correction:
+                misspellings[clean_word] = correction
+
+    return misspellings
+
+# Updated validate_combined function with fallback spelling logic
 def validate_combined(input_ppt):
     presentation = Presentation(input_ppt)
     combined_issues = []
@@ -28,7 +45,7 @@ def validate_combined(input_ppt):
                     for run in paragraph.runs:
                         text = run.text.strip()
                         if text:
-                            # Grammar or Spelling Check
+                            # Grammar or Spelling Check using LanguageTool
                             if grammar_tool:
                                 matches = grammar_tool.check(text)
                                 if matches:
@@ -38,8 +55,18 @@ def validate_combined(input_ppt):
                                             'slide': slide_index,
                                             'issue': 'Grammar or Spelling Error',
                                             'text': text,
-                                            'corrected': corrected  # Do not include punctuation corrections
+                                            'corrected': corrected
                                         })
+
+                            # Fallback Spelling Check
+                            fallback_misspellings = fallback_spelling_check(text)
+                            for original_word, correction in fallback_misspellings.items():
+                                combined_issues.append({
+                                    'slide': slide_index,
+                                    'issue': 'Misspelling',
+                                    'text': f"Original: {original_word}",
+                                    'corrected': f"Suggestion: {correction}"
+                                })
 
                             # Punctuation Check (Excessive Punctuation)
                             excessive_punctuation_pattern = r"([!?.:,;]{2,})"
@@ -75,6 +102,39 @@ def validate_fonts(input_ppt, default_font):
                                 })
     return font_issues
 
+# Function to detect punctuation issues
+def validate_punctuation(input_ppt):
+    presentation = Presentation(input_ppt)
+    punctuation_issues = []
+
+    excessive_punctuation_pattern = r"([!?.:,;]{2,})"
+    repeated_word_pattern = r"\b(\w+)\s+\1\b"
+
+    for slide_index, slide in enumerate(presentation.slides, start=1):
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                for paragraph in shape.text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        text = run.text.strip()
+                        if text:
+                            if re.search(excessive_punctuation_pattern, text):
+                                punctuation_issues.append({
+                                    'slide': slide_index,
+                                    'issue': 'Punctuation Marks',
+                                    'text': text,
+                                    'corrected': "Excessive punctuation marks detected"
+                                })
+
+                            if re.search(repeated_word_pattern, text, flags=re.IGNORECASE):
+                                punctuation_issues.append({
+                                    'slide': slide_index,
+                                    'issue': 'Punctuation Marks',
+                                    'text': text,
+                                    'corrected': "Repeated words detected"
+                                })
+
+    return punctuation_issues
+
 # Function to save issues to CSV
 def save_to_csv(issues, output_csv):
     with open(output_csv, mode='w', newline='', encoding='utf-8') as file:
@@ -99,9 +159,10 @@ def main():
             csv_output_path = Path(tmpdir) / "validation_report.csv"
 
             font_issues = validate_fonts(temp_ppt_path, default_font)
+            punctuation_issues = validate_punctuation(temp_ppt_path)
             combined_issues = validate_combined(temp_ppt_path)
 
-            all_issues = font_issues + combined_issues
+            all_issues = font_issues + punctuation_issues + combined_issues
             save_to_csv(all_issues, csv_output_path)
 
             st.success("Validation completed!")
