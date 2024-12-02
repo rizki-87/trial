@@ -23,7 +23,7 @@ grammar_tool = initialize_language_tool()
 # Fallback grammar check rules
 def fallback_grammar_check(text):
     fallback_rules = [
-        (r'\b(can|could|should|would|may|might|must)\s+(\w+)\b(?!\s+be)', r'\1 \2 be'),  # Missing 'be' after modals
+        (r'\b(can|could|should|would|may|might|must)\s+(\w+)\b(?!\s+be)', r'\1 be \2'),  # Missing 'be' after modals
         (r'\b(doesn\'t|don\'t|didn\'t|isn\'t|aren\'t|weren\'t)\s+(\w+)\b', r'\1 \2'),  # Contraction errors
         (r'\b(is|are|was|were|has|have|had|does|do|did)\s*(?!\w)', r'\1 '),  # Missing subject after auxiliaries
     ]
@@ -34,6 +34,7 @@ def fallback_grammar_check(text):
             return f"Grammar Error detected", corrected_text
 
     return None, None
+
 
 
 # Function to validate combined issues
