@@ -7,34 +7,17 @@ import csv
 import re
 import string
 
-# LanguageTool API initialization
+# LanguageTool initialization
 def initialize_language_tool():
     try:
-        return language_tool_python.LanguageToolPublicAPI('en-US')  # Use Public API mode
+        return language_tool_python.LanguageToolPublicAPI('en-US')  # Using Public API mode
     except Exception as e:
         st.error(f"LanguageTool initialization failed: {e}")
         return None
 
 grammar_tool = initialize_language_tool()
 
-# Fallback spelling check for redundancy
-def fallback_spelling_check(text):
-    common_misspellings = {
-        "sentense": "sentence",
-        "speling": "spelling",
-        "misteaks": "mistakes",
-        "commmon": "common",
-        "intersting": "interesting",
-    }
-    misspellings = {}
-    words = text.split()
-    for word in words:
-        clean_word = word.strip(string.punctuation)
-        if clean_word in common_misspellings:
-            misspellings[word] = common_misspellings[clean_word]
-    return misspellings
-
-# Updated validate_combined function for enhanced grammar checks
+# Main validate_combined function
 def validate_combined(input_ppt):
     presentation = Presentation(input_ppt)
     combined_issues = []
@@ -46,21 +29,32 @@ def validate_combined(input_ppt):
                     for run in paragraph.runs:
                         text = run.text.strip()
                         if text:
-                            # Grammar or Spelling Check using LanguageTool
+                            # Grammar or Spelling Check
                             if grammar_tool:
                                 matches = grammar_tool.check(text)
-                                if matches:
-                                    corrected = language_tool_python.utils.correct(text, matches)
-                                    if corrected != text:  # Only log if correction is made
-                                        combined_issues.append({
-                                            'slide': slide_index,
-                                            'issue': 'Grammar or Spelling Error',
-                                            'text': text,
-                                            'corrected': corrected
-                                        })
+                                corrected = language_tool_python.utils.correct(text, matches)
+                                if corrected != text:  # Only log if correction is made
+                                    combined_issues.append({
+                                        'slide': slide_index,
+                                        'issue': 'Grammar or Spelling Error',
+                                        'text': text,
+                                        'corrected': corrected
+                                    })
+
+                            # Additional Grammar Rules for Modal Verbs
+                            modal_verb_pattern = r"\b(can|could|may|might|must|shall|should|will|would)\s+[a-zA-Z]+ed\b"
+                            modal_match = re.search(modal_verb_pattern, text)
+                            if modal_match:
+                                suggested_correction = text.replace(modal_match.group(0), f"{modal_match.group(1)} be {modal_match.group(0).split()[1]}")
+                                combined_issues.append({
+                                    'slide': slide_index,
+                                    'issue': 'Grammar Error',
+                                    'text': text,
+                                    'corrected': suggested_correction
+                                })
 
                             # Punctuation Check (Excessive Punctuation)
-                            excessive_punctuation_pattern = r"([!?.:,;]{2,})"  # Two or more consecutive punctuation marks
+                            excessive_punctuation_pattern = r"([!?.:,;]{2,})"
                             match = re.search(excessive_punctuation_pattern, text)
                             if match:
                                 punctuation_marks = match.group(1)
@@ -69,16 +63,6 @@ def validate_combined(input_ppt):
                                     'issue': 'Punctuation Marks',
                                     'text': text,
                                     'corrected': f"Excessive punctuation marks detected ({punctuation_marks})"
-                                })
-
-                            # Fallback Spelling Check
-                            fallback_misspellings = fallback_spelling_check(text)
-                            for original_word, correction in fallback_misspellings.items():
-                                combined_issues.append({
-                                    'slide': slide_index,
-                                    'issue': 'Misspelling',
-                                    'text': f"Original: {original_word}",
-                                    'corrected': f"Suggestion: {correction}"
                                 })
 
     return combined_issues
