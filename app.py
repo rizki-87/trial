@@ -5,8 +5,6 @@ from pptx import Presentation
 import language_tool_python
 import csv
 import re
-import string
-
 
 # LanguageTool API initialization
 def initialize_language_tool():
@@ -16,28 +14,9 @@ def initialize_language_tool():
         st.error(f"LanguageTool initialization failed: {e}")
         return None
 
-
 grammar_tool = initialize_language_tool()
 
-
-# Fallback grammar check rules
-def fallback_grammar_check(text):
-    fallback_rules = [
-        (r'\b(can|could|should|would|may|might|must)\s+(\w+)\b(?!\s+be)', r'\1 be \2'),  # Missing 'be' after modals
-        (r'\b(doesn\'t|don\'t|didn\'t|isn\'t|aren\'t|weren\'t)\s+(\w+)\b', r'\1 \2'),  # Contraction errors
-        (r'\b(is|are|was|were|has|have|had|does|do|did)\s*(?!\w)', r'\1 '),  # Missing subject after auxiliaries
-    ]
-
-    for pattern, replacement in fallback_rules:
-        if re.search(pattern, text):
-            corrected_text = re.sub(pattern, replacement, text)
-            return f"Grammar Error detected", corrected_text
-
-    return None, None
-
-
-
-# Function to validate combined issues
+# Function to validate grammar using LanguageTool
 def validate_combined(input_ppt):
     presentation = Presentation(input_ppt)
     combined_issues = []
@@ -49,7 +28,7 @@ def validate_combined(input_ppt):
                     for run in paragraph.runs:
                         text = run.text.strip()
                         if text:
-                            # Grammar check with LanguageTool
+                            # Grammar Check using LanguageTool
                             if grammar_tool:
                                 matches = grammar_tool.check(text)
                                 if matches:
@@ -61,19 +40,7 @@ def validate_combined(input_ppt):
                                             'text': text,
                                             'corrected': corrected
                                         })
-
-                            # Fallback grammar check
-                            fallback_issue, fallback_suggestion = fallback_grammar_check(text)
-                            if fallback_issue:
-                                combined_issues.append({
-                                    'slide': slide_index,
-                                    'issue': fallback_issue,
-                                    'text': text,
-                                    'corrected': fallback_suggestion
-                                })
-
     return combined_issues
-
 
 # Function to validate fonts in a presentation
 def validate_fonts(input_ppt, default_font):
@@ -95,13 +62,12 @@ def validate_fonts(input_ppt, default_font):
                                 })
     return font_issues
 
-
-# Function to validate punctuation
+# Function to detect punctuation issues
 def validate_punctuation(input_ppt):
     presentation = Presentation(input_ppt)
     punctuation_issues = []
 
-    excessive_punctuation_pattern = r"([!?.:,;]{2,})"
+    excessive_punctuation_pattern = r"([!?.:,;]{2,})"  # Two or more punctuation marks
 
     for slide_index, slide in enumerate(presentation.slides, start=1):
         for shape in slide.shapes:
@@ -119,9 +85,7 @@ def validate_punctuation(input_ppt):
                                     'text': text,
                                     'corrected': f"Excessive punctuation marks detected ({punctuation_marks})"
                                 })
-
     return punctuation_issues
-
 
 # Function to save issues to CSV
 def save_to_csv(issues, output_csv):
@@ -129,7 +93,6 @@ def save_to_csv(issues, output_csv):
         writer = csv.DictWriter(file, fieldnames=['slide', 'issue', 'text', 'corrected'])
         writer.writeheader()
         writer.writerows(issues)
-
 
 # Main Streamlit app
 def main():
@@ -157,7 +120,6 @@ def main():
             st.success("Validation completed!")
             st.download_button("Download Validation Report (CSV)", csv_output_path.read_bytes(),
                                file_name="validation_report.csv")
-
 
 if __name__ == "__main__":
     main()
