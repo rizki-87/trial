@@ -17,13 +17,20 @@ def initialize_language_tool():
 
 grammar_tool = initialize_language_tool()
 
-# Validate combined logic (grammar, spelling, punctuation)
+import re
+
+# Updated validate_combined function
 def validate_combined(input_ppt):
     presentation = Presentation(input_ppt)
     combined_issues = []
 
-    # Auxiliary verbs for grammar correction
-    auxiliary_verbs = ['is', 'are', 'was', 'were', 'has', 'have', 'had', 'be', 'being', 'been', 'does', 'do', 'did']
+    # Define patterns for grammatical corrections
+    grammar_patterns = [
+        (r"\bcan overused\b", "can be overused"),
+        (r"\bsentense\b", "sentence"),
+        (r"\bspleling\b", "spelling"),
+        # Tambahkan pola lain jika perlu
+    ]
 
     for slide_index, slide in enumerate(presentation.slides, start=1):
         for shape in slide.shapes:
@@ -32,11 +39,11 @@ def validate_combined(input_ppt):
                     for run in paragraph.runs:
                         text = run.text.strip()
                         if text:
-                            # Grammar or Spelling Check
+                            # Grammar Check using LanguageTool
                             if grammar_tool:
                                 matches = grammar_tool.check(text)
                                 corrected = language_tool_python.utils.correct(text, matches)
-                                if corrected != text:  # Only log if correction is made
+                                if corrected != text:
                                     combined_issues.append({
                                         'slide': slide_index,
                                         'issue': 'Grammar or Spelling Error',
@@ -44,48 +51,18 @@ def validate_combined(input_ppt):
                                         'corrected': corrected
                                     })
 
-                            # Missing Auxiliary Verbs Check
-                            missing_auxiliary_pattern = r"\b(This|That|These|Those|It|They|We|I|You|He|She|Someone)\s+[a-zA-Z]+(\s+[a-zA-Z]+)*(\s+(a|an|the)\s+[a-zA-Z]+)?$"
-                            missing_auxiliary_match = re.search(missing_auxiliary_pattern, text)
-                            if missing_auxiliary_match:
-                                suggested_correction = f"{text.split()[0]} {auxiliary_verbs[0]} {' '.join(text.split()[1:])}"
-                                combined_issues.append({
-                                    'slide': slide_index,
-                                    'issue': 'Grammar Error: Missing Auxiliary Verb',
-                                    'text': text,
-                                    'corrected': suggested_correction
-                                })
-
-                            # Custom Rules for Missing "be" or "has"
-                            custom_patterns = [
-                                (r"\b(can|could|should|would|may|might|must)\s+\b(\w+)", r"\1 be \2"),  # Modal missing 'be'
-                                (r"\b(has|have|had)\s+\b(\w+)", r"\1 been \2"),  # 'Has' missing 'been'
-                                (r"\b(This|That|These|Those|He|She|It|They|We|You|I)\s+[a-zA-Z]+\b", r"\1 is \2")  # Generic missing 'is'
-                            ]
-                            for pattern, replacement in custom_patterns:
-                                match = re.search(pattern, text)
-                                if match:
-                                    corrected_text = re.sub(pattern, replacement, text)
+                            # Additional Regex-Based Grammar Fixes
+                            for pattern, replacement in grammar_patterns:
+                                corrected_text = re.sub(pattern, replacement, text)
+                                if corrected_text != text:  # If changes are made
                                     combined_issues.append({
                                         'slide': slide_index,
-                                        'issue': 'Grammar Error: Missing Verb',
+                                        'issue': 'Grammar Error',
                                         'text': text,
                                         'corrected': corrected_text
                                     })
-
-                            # Punctuation Check (Excessive Punctuation)
-                            excessive_punctuation_pattern = r"([!?.:,;]{2,})"
-                            match = re.search(excessive_punctuation_pattern, text)
-                            if match:
-                                punctuation_marks = match.group(1)
-                                combined_issues.append({
-                                    'slide': slide_index,
-                                    'issue': 'Punctuation Marks',
-                                    'text': text,
-                                    'corrected': f"Excessive punctuation marks detected ({punctuation_marks})"
-                                })
-
     return combined_issues
+
 
 # Validate fonts in the presentation
 def validate_fonts(input_ppt, default_font):
