@@ -101,7 +101,7 @@ def validate_fonts(input_ppt, default_font):
                                     'slide': slide_index,
                                     'issue': 'Inconsistent Font',
                                     'text': run.text,
-                                    'corrected': f"Expected font: {default_font}"
+                                    'corrected': f"Detected: {run.font.name}, Expected: {default_font}"
                                 })
     return issues
 
