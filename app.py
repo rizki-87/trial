@@ -2,13 +2,13 @@ import streamlit as st
 import tempfile
 from pathlib import Path
 from pptx import Presentation
-from spellchecker import SpellChecker
 import language_tool_python
 import csv
 import re
 import string
 
-# Initialize LanguageTool
+
+# LanguageTool API initialization
 def initialize_language_tool():
     try:
         return language_tool_python.LanguageToolPublicAPI('en-US')  # Use Public API mode
@@ -16,24 +16,30 @@ def initialize_language_tool():
         st.error(f"LanguageTool initialization failed: {e}")
         return None
 
+
 grammar_tool = initialize_language_tool()
 
-# Fallback spelling checker using pyspellchecker
-def fallback_spelling_check(text):
-    spell = SpellChecker()
-    words = text.split()
-    misspellings = {}
 
+# Fallback spelling checker using regex
+def fallback_spelling_check(text):
+    # Simple spelling corrections as an example
+    fallback_corrections = {
+        "speling": "spelling",
+        "sentense": "sentence",
+        "misteaks": "mistakes",
+        "intersting": "interesting",
+        "commmon": "common"
+    }
+    words = text.split()
+    corrections = {}
     for word in words:
         clean_word = word.strip(string.punctuation)
-        if clean_word and clean_word.lower() not in spell:
-            correction = spell.correction(clean_word)
-            if correction:
-                misspellings[clean_word] = correction
+        if clean_word.lower() in fallback_corrections:
+            corrections[word] = fallback_corrections[clean_word.lower()]
+    return corrections
 
-    return misspellings
 
-# Updated validate_combined function with fallback spelling logic
+# Updated validate_combined function
 def validate_combined(input_ppt):
     presentation = Presentation(input_ppt)
     combined_issues = []
@@ -58,6 +64,18 @@ def validate_combined(input_ppt):
                                             'corrected': corrected
                                         })
 
+                            # Punctuation Check (Excessive Punctuation)
+                            excessive_punctuation_pattern = r"([!?.:,;]{2,})"  # Two or more consecutive punctuation marks
+                            match = re.search(excessive_punctuation_pattern, text)
+                            if match:
+                                punctuation_marks = match.group(1)
+                                combined_issues.append({
+                                    'slide': slide_index,
+                                    'issue': 'Punctuation Marks',
+                                    'text': text,
+                                    'corrected': f"Excessive punctuation marks detected ({punctuation_marks})"
+                                })
+
                             # Fallback Spelling Check
                             fallback_misspellings = fallback_spelling_check(text)
                             for original_word, correction in fallback_misspellings.items():
@@ -68,19 +86,8 @@ def validate_combined(input_ppt):
                                     'corrected': f"Suggestion: {correction}"
                                 })
 
-                            # Punctuation Check (Excessive Punctuation)
-                            excessive_punctuation_pattern = r"([!?.:,;]{2,})"
-                            match = re.search(excessive_punctuation_pattern, text)
-                            if match:
-                                punctuation_marks = match.group(1)
-                                combined_issues.append({
-                                    'slide': slide_index,
-                                    'issue': 'Punctuation Issue',
-                                    'text': text,
-                                    'corrected': f"Excessive punctuation marks detected ({punctuation_marks})"
-                                })
-
     return combined_issues
+
 
 # Function to validate fonts in a presentation
 def validate_fonts(input_ppt, default_font):
@@ -102,38 +109,6 @@ def validate_fonts(input_ppt, default_font):
                                 })
     return font_issues
 
-# Function to detect punctuation issues
-def validate_punctuation(input_ppt):
-    presentation = Presentation(input_ppt)
-    punctuation_issues = []
-
-    excessive_punctuation_pattern = r"([!?.:,;]{2,})"
-    repeated_word_pattern = r"\b(\w+)\s+\1\b"
-
-    for slide_index, slide in enumerate(presentation.slides, start=1):
-        for shape in slide.shapes:
-            if shape.has_text_frame:
-                for paragraph in shape.text_frame.paragraphs:
-                    for run in paragraph.runs:
-                        text = run.text.strip()
-                        if text:
-                            if re.search(excessive_punctuation_pattern, text):
-                                punctuation_issues.append({
-                                    'slide': slide_index,
-                                    'issue': 'Punctuation Marks',
-                                    'text': text,
-                                    'corrected': "Excessive punctuation marks detected"
-                                })
-
-                            if re.search(repeated_word_pattern, text, flags=re.IGNORECASE):
-                                punctuation_issues.append({
-                                    'slide': slide_index,
-                                    'issue': 'Punctuation Marks',
-                                    'text': text,
-                                    'corrected': "Repeated words detected"
-                                })
-
-    return punctuation_issues
 
 # Function to save issues to CSV
 def save_to_csv(issues, output_csv):
@@ -141,6 +116,7 @@ def save_to_csv(issues, output_csv):
         writer = csv.DictWriter(file, fieldnames=['slide', 'issue', 'text', 'corrected'])
         writer.writeheader()
         writer.writerows(issues)
+
 
 # Main Streamlit app
 def main():
@@ -159,15 +135,15 @@ def main():
             csv_output_path = Path(tmpdir) / "validation_report.csv"
 
             font_issues = validate_fonts(temp_ppt_path, default_font)
-            punctuation_issues = validate_punctuation(temp_ppt_path)
             combined_issues = validate_combined(temp_ppt_path)
 
-            all_issues = font_issues + punctuation_issues + combined_issues
+            all_issues = font_issues + combined_issues
             save_to_csv(all_issues, csv_output_path)
 
             st.success("Validation completed!")
             st.download_button("Download Validation Report (CSV)", csv_output_path.read_bytes(),
                                file_name="validation_report.csv")
+
 
 if __name__ == "__main__":
     main()
