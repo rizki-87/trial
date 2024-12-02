@@ -7,20 +7,23 @@ import csv
 import re
 import string
 
-# LanguageTool initialization
+# Initialize LanguageTool
 def initialize_language_tool():
     try:
-        return language_tool_python.LanguageToolPublicAPI('en-US')  # Using Public API mode
+        return language_tool_python.LanguageToolPublicAPI('en-US')  # Use Public API mode
     except Exception as e:
         st.error(f"LanguageTool initialization failed: {e}")
         return None
 
 grammar_tool = initialize_language_tool()
 
-# Main validate_combined function
+# Validate combined logic (grammar, spelling, punctuation)
 def validate_combined(input_ppt):
     presentation = Presentation(input_ppt)
     combined_issues = []
+
+    # Auxiliary verbs for grammar correction
+    auxiliary_verbs = ['is', 'are', 'was', 'were', 'has', 'have', 'had', 'be', 'being', 'been', 'does', 'do', 'did']
 
     for slide_index, slide in enumerate(presentation.slides, start=1):
         for shape in slide.shapes:
@@ -41,17 +44,34 @@ def validate_combined(input_ppt):
                                         'corrected': corrected
                                     })
 
-                            # Additional Grammar Rules for Modal Verbs
-                            modal_verb_pattern = r"\b(can|could|may|might|must|shall|should|will|would)\s+[a-zA-Z]+ed\b"
-                            modal_match = re.search(modal_verb_pattern, text)
-                            if modal_match:
-                                suggested_correction = text.replace(modal_match.group(0), f"{modal_match.group(1)} be {modal_match.group(0).split()[1]}")
+                            # Missing Auxiliary Verbs Check
+                            missing_auxiliary_pattern = r"\b(This|That|These|Those|It|They|We|I|You|He|She|Someone)\s+[a-zA-Z]+(\s+[a-zA-Z]+)*(\s+(a|an|the)\s+[a-zA-Z]+)?$"
+                            missing_auxiliary_match = re.search(missing_auxiliary_pattern, text)
+                            if missing_auxiliary_match:
+                                suggested_correction = f"{text.split()[0]} {auxiliary_verbs[0]} {' '.join(text.split()[1:])}"
                                 combined_issues.append({
                                     'slide': slide_index,
-                                    'issue': 'Grammar Error',
+                                    'issue': 'Grammar Error: Missing Auxiliary Verb',
                                     'text': text,
                                     'corrected': suggested_correction
                                 })
+
+                            # Custom Rules for Missing "be" or "has"
+                            custom_patterns = [
+                                (r"\b(can|could|should|would|may|might|must)\s+\b(\w+)", r"\1 be \2"),  # Modal missing 'be'
+                                (r"\b(has|have|had)\s+\b(\w+)", r"\1 been \2"),  # 'Has' missing 'been'
+                                (r"\b(This|That|These|Those|He|She|It|They|We|You|I)\s+[a-zA-Z]+\b", r"\1 is \2")  # Generic missing 'is'
+                            ]
+                            for pattern, replacement in custom_patterns:
+                                match = re.search(pattern, text)
+                                if match:
+                                    corrected_text = re.sub(pattern, replacement, text)
+                                    combined_issues.append({
+                                        'slide': slide_index,
+                                        'issue': 'Grammar Error: Missing Verb',
+                                        'text': text,
+                                        'corrected': corrected_text
+                                    })
 
                             # Punctuation Check (Excessive Punctuation)
                             excessive_punctuation_pattern = r"([!?.:,;]{2,})"
@@ -67,7 +87,7 @@ def validate_combined(input_ppt):
 
     return combined_issues
 
-# Function to validate fonts in a presentation
+# Validate fonts in the presentation
 def validate_fonts(input_ppt, default_font):
     presentation = Presentation(input_ppt)
     font_issues = []
@@ -77,17 +97,16 @@ def validate_fonts(input_ppt, default_font):
             if shape.has_text_frame:
                 for paragraph in shape.text_frame.paragraphs:
                     for run in paragraph.runs:
-                        if run.text.strip():
-                            if run.font.name != default_font:
-                                font_issues.append({
-                                    'slide': slide_index,
-                                    'issue': 'Inconsistent Font',
-                                    'text': run.text,
-                                    'corrected': f"Expected font: {default_font}"
-                                })
+                        if run.text.strip() and run.font.name != default_font:
+                            font_issues.append({
+                                'slide': slide_index,
+                                'issue': 'Inconsistent Font',
+                                'text': run.text,
+                                'corrected': f"Expected font: {default_font}"
+                            })
     return font_issues
 
-# Function to save issues to CSV
+# Save issues to a CSV file
 def save_to_csv(issues, output_csv):
     with open(output_csv, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.DictWriter(file, fieldnames=['slide', 'issue', 'text', 'corrected'])
