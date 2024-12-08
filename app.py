@@ -158,7 +158,7 @@ def main():
         st.session_state.uploaded_file = None
 
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
-    font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica"]
+    font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
     default_font = st.selectbox("Select the default font for validation", font_options)
 
     if uploaded_file:
