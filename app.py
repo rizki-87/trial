@@ -19,12 +19,8 @@ def initialize_language_tool():
 
 grammar_tool = initialize_language_tool()
 
-# Function to highlight background in yellow
-def highlight_background(run):
-    run.font.highlight_color = RGBColor(255, 255, 0)  # Yellow background
-
 # Function to detect grammar issues
-def validate_grammar(input_ppt, output_ppt):
+def validate_grammar(input_ppt):
     presentation = Presentation(input_ppt)
     grammar_issues = []
 
@@ -35,20 +31,17 @@ def validate_grammar(input_ppt, output_ppt):
                     for run in paragraph.runs:
                         text = run.text.strip()
                         if text:
-                            # Grammar Check using LanguageTool
                             if grammar_tool:
                                 matches = grammar_tool.check(text)
                                 if matches:
                                     corrected = language_tool_python.utils.correct(text, matches)
-                                    if corrected != text:  # Only log if correction is made
+                                    if corrected != text:
                                         grammar_issues.append({
                                             'slide': slide_index,
                                             'issue': 'Grammar Error',
                                             'text': text,
                                             'corrected': corrected
                                         })
-                                        highlight_background(run)  # Highlight background
-    presentation.save(output_ppt)  # Save presentation with highlights
     return grammar_issues
 
 # Function to detect and correct misspellings
@@ -63,11 +56,10 @@ def detect_misspellings(text):
             correction = spell.correction(clean_word)
             if correction:
                 misspellings[word] = correction
-
     return misspellings
 
 # Function to validate spelling
-def validate_spelling(input_ppt, output_ppt):
+def validate_spelling(input_ppt):
     presentation = Presentation(input_ppt)
     spelling_issues = []
 
@@ -85,14 +77,12 @@ def validate_spelling(input_ppt, output_ppt):
                                     'text': f"Original: {original_word}",
                                     'corrected': f"Suggestion: {correction}"
                                 })
-                                highlight_background(run)  # Highlight background
-    presentation.save(output_ppt)  # Save presentation with highlights
     return spelling_issues
 
 # Function to validate fonts in a presentation
 def validate_fonts(input_ppt, default_font):
     presentation = Presentation(input_ppt)
-    issues = []
+    font_issues = []
 
     for slide_index, slide in enumerate(presentation.slides, start=1):
         for shape in slide.shapes:
@@ -101,13 +91,13 @@ def validate_fonts(input_ppt, default_font):
                     for run in paragraph.runs:
                         if run.text.strip():
                             if run.font.name != default_font:
-                                issues.append({
+                                font_issues.append({
                                     'slide': slide_index,
                                     'issue': 'Inconsistent Font',
                                     'text': run.text,
                                     'corrected': f"Detected: {run.font.name}, Expected: {default_font}"
                                 })
-    return issues
+    return font_issues
 
 # Function to detect punctuation issues
 def validate_punctuation(input_ppt):
@@ -124,7 +114,6 @@ def validate_punctuation(input_ppt):
                     for run in paragraph.runs:
                         if run.text.strip():
                             text = run.text
-
                             match = re.search(excessive_punctuation_pattern, text)
                             if match:
                                 punctuation_marks = match.group(1)
@@ -142,8 +131,22 @@ def validate_punctuation(input_ppt):
                                     'text': text,
                                     'corrected': "Repeated words detected"
                                 })
-
     return punctuation_issues
+
+# Function to highlight issues in presentation
+def highlight_presentation(input_ppt, issues, output_ppt):
+    presentation = Presentation(input_ppt)
+    for issue in issues:
+        slide_idx = issue['slide'] - 1
+        slide = presentation.slides[slide_idx]
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                for paragraph in shape.text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        if issue['text'] in run.text:
+                            run.font.highlight_color = RGBColor(255, 255, 0)  # Yellow highlight
+                            run.text = f"[{issue['issue']}] {run.text}"  # Add issue type
+    presentation.save(output_ppt)
 
 # Function to save issues to CSV
 def save_to_csv(issues, output_csv):
@@ -165,6 +168,7 @@ def main():
     st.title("PPT Validator")
 
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
+
     font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
     default_font = st.selectbox("Select the default font for validation", font_options)
 
@@ -175,24 +179,26 @@ def main():
                 f.write(uploaded_file.getbuffer())
 
             csv_output_path = Path(tmpdir) / "validation_report.csv"
-            highlighted_ppt_path = Path(tmpdir) / "highlighted_ppt.pptx"
+            ppt_output_path = Path(tmpdir) / "highlighted_presentation.pptx"
 
             font_issues = validate_fonts(temp_ppt_path, default_font)
             punctuation_issues = validate_punctuation(temp_ppt_path)
-            spelling_issues = validate_spelling(temp_ppt_path, highlighted_ppt_path)
-            grammar_issues = validate_grammar(temp_ppt_path, highlighted_ppt_path)
+            spelling_issues = validate_spelling(temp_ppt_path)
+            grammar_issues = validate_grammar(temp_ppt_path)
 
             combined_issues = font_issues + punctuation_issues + spelling_issues + grammar_issues
             save_to_csv(combined_issues, csv_output_path)
+            highlight_presentation(temp_ppt_path, combined_issues, ppt_output_path)
 
             st.success("Validation completed!")
             st.download_button("Download Validation Report (CSV)", csv_output_path.read_bytes(),
                                file_name="validation_report.csv")
-            st.download_button("Download Highlighted Presentation (PPTX)", highlighted_ppt_path.read_bytes(),
+            st.download_button("Download Highlighted Presentation (PPTX)", ppt_output_path.read_bytes(),
                                file_name="highlighted_presentation.pptx")
 
 if __name__ == "__main__":
     main()
+
 
 
 #########################################################################################
