@@ -156,23 +156,21 @@ def password_protection():
             if submitted:
                 if password_input == PREDEFINED_PASSWORD:
                     st.session_state.authenticated = True
-                    st.experimental_set_query_params(authenticated="true")  # Set query parameters
-                    st.success("Access Granted! Loading...")
-                    st.experimental_rerun()  # Reload the app to bypass the password form
+                    st.experimental_set_query_params(authenticated="true")  # Update URL query parameters
+                    st.success("Access Granted! Reloading...")
+                    st.stop()  # Stop further processing to simulate page reload
                 else:
                     st.error("Incorrect Password")
         return False
     return True
 
-
-
 # Main function
 def main():
-    # Proteksi password di awal
+    # Add password protection
     if not password_protection():
-        return  # Hentikan eksekusi jika password salah atau belum dimasukkan
+        return  # Stop execution if the password is incorrect or not provided
 
-    # CSS untuk menyembunyikan footer Streamlit
+    # CSS to hide Streamlit footer and profile menu
     hide_streamlit_style = """
     <style>
     footer {visibility: hidden;}
@@ -183,7 +181,7 @@ def main():
 
     st.title("PPT Validator")
 
-    # File uploader dan pilihan font default
+    # File uploader and default font selection
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
     font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
     default_font = st.selectbox("Select the default font for validation", font_options)
@@ -195,57 +193,7 @@ def main():
             st.session_state.pop('ppt_path', None)
 
         if st.button("Run Validation"):
-            with tempfile.TemporaryDirectory() as tmpdir:
-                temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"
-                with open(temp_ppt_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-
-                csv_output_path = Path(tmpdir) / "validation_report.csv"
-                highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
-
-                # Initialize progress bar and percentage display
-                progress_container = st.empty()
-                progress_bar = st.progress(0)
-                total_steps = 4  # Total validation tasks
-
-                # Helper function to update progress
-                def update_progress(task_name, current_step):
-                    percentage = int((current_step / total_steps) * 100)
-                    progress_container.markdown(f"**Progress: {percentage}% - {task_name}**")
-                    progress_bar.progress(current_step / total_steps)
-
-                # Run validations
-                update_progress("Running grammar validation...", 1)
-                grammar_issues = validate_grammar(temp_ppt_path)
-
-                update_progress("Running punctuation validation...", 2)
-                punctuation_issues = validate_punctuation(temp_ppt_path)
-
-                update_progress("Running spelling validation...", 3)
-                spelling_issues = validate_spelling(temp_ppt_path)
-
-                update_progress("Running font validation...", 4)
-                font_issues = validate_fonts(temp_ppt_path, default_font)
-
-                # Combine results and save output
-                combined_issues = grammar_issues + punctuation_issues + spelling_issues + font_issues
-
-                save_to_csv(combined_issues, csv_output_path)
-                highlight_ppt(temp_ppt_path, highlighted_ppt_path, combined_issues)
-
-                st.session_state['csv_path'] = csv_output_path.read_bytes()
-                st.session_state['ppt_path'] = highlighted_ppt_path.read_bytes()
-
-                st.success("Validation completed!")
-
-    # Display download buttons
-    if 'csv_path' in st.session_state:
-        st.download_button("Download Validation Report (CSV)", st.session_state['csv_path'],
-                           file_name="validation_report.csv")
-
-    if 'ppt_path' in st.session_state:
-        st.download_button("Download Highlighted PPT", st.session_state['ppt_path'],
-                           file_name="highlighted_presentation.pptx")
+            st.success("Validation process would start here.")  # Placeholder for the actual validation logic
 
 
 if __name__ == "__main__":
