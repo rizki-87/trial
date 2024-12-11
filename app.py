@@ -150,14 +150,13 @@ def password_protection():
         st.session_state.authenticated = False
 
     if not st.session_state.authenticated:
-        with st.form("password_form", clear_on_submit=True):
+        with st.form("password_form"):
             password_input = st.text_input("Enter Password", type="password")
             submitted = st.form_submit_button("Submit")
             if submitted:
                 if password_input == PREDEFINED_PASSWORD:
                     st.session_state.authenticated = True
-                    st.success("Access Granted! Please proceed.")
-                    st.stop()  # Prevent further execution until next page load
+                    st.experimental_set_query_params(authenticated="true")  # Reload page
                 else:
                     st.error("Incorrect Password")
         return False
