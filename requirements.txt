@@ -1,5 +1,5 @@
 fonttools==4.55.0
-matplotlib==3.6.0  
+matplotlib==3.6.0
 python-pptx==1.0.2
 regex==2024.11.6
 requests==2.32.3
@@ -8,8 +8,11 @@ pyspellchecker==0.7.1
 language-tool-python==2.7.0
 setuptools>=65.0
 streamlit==1.23.1
-numpy
-pandas
+numpy>=1.24.0
+pandas==1.5.3
+pillow>=9.5.0
+
+
 
 
 
