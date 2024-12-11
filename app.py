@@ -156,7 +156,7 @@ def password_protection():
             if submitted:
                 if password_input == PREDEFINED_PASSWORD:
                     st.session_state.authenticated = True
-                    st.success("Access Granted!")
+                    st.success("Access Granted! Please Click "Submit" Again...")
                 else:
                     st.error("Incorrect Password")
         return False
