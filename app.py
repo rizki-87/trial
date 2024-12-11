@@ -150,13 +150,13 @@ def password_protection():
         st.session_state.authenticated = False
 
     if not st.session_state.authenticated:
-        with st.form("password_form"):
+        with st.form("password_form", clear_on_submit=True):
             password_input = st.text_input("Enter Password", type="password")
             submitted = st.form_submit_button("Submit")
             if submitted:
                 if password_input == PREDEFINED_PASSWORD:
                     st.session_state.authenticated = True
-                    st.experimental_set_query_params(authenticated="true")  # Reload page
+                    st.success("Access Granted! Please click 'Submit' again to proceed.")
                 else:
                     st.error("Incorrect Password")
         return False
@@ -164,8 +164,9 @@ def password_protection():
 
 # Main function
 def main():
+    # Add password protection
     if not password_protection():
-        return
+        return  # Stop execution if the password is incorrect or not provided
 
     # CSS to hide Streamlit footer and profile menu
     hide_streamlit_style = """
@@ -178,6 +179,7 @@ def main():
 
     st.title("PPT Validator")
 
+    # File uploader and default font selection
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
     font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
     default_font = st.selectbox("Select the default font for validation", font_options)
@@ -197,6 +199,7 @@ def main():
                 csv_output_path = Path(tmpdir) / "validation_report.csv"
                 highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
 
+                # Initialize progress bar and percentage display
                 progress_container = st.empty()
                 progress_bar = st.progress(0)
                 total_steps = 4
@@ -206,6 +209,7 @@ def main():
                     progress_container.markdown(f"**Progress: {percentage}% - {task_name}**")
                     progress_bar.progress(current_step / total_steps)
 
+                # Run validations
                 update_progress("Running grammar validation...", 1)
                 grammar_issues = validate_grammar(temp_ppt_path)
 
@@ -218,6 +222,7 @@ def main():
                 update_progress("Running font validation...", 4)
                 font_issues = validate_fonts(temp_ppt_path, default_font)
 
+                # Combine results and save output
                 combined_issues = grammar_issues + punctuation_issues + spelling_issues + font_issues
 
                 save_to_csv(combined_issues, csv_output_path)
