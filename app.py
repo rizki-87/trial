@@ -156,9 +156,9 @@ def password_protection():
             if submitted:
                 if password_input == PREDEFINED_PASSWORD:
                     st.session_state.authenticated = True
-                    st.query_params(authenticated="true")  # Menggunakan metode yang baru
+                    st.experimental_set_query_params(authenticated="true")  # Set query parameters
                     st.success("Access Granted! Loading...")
-                    st.experimental_rerun()  # Langsung pindah tanpa tambahan klik
+                    st.experimental_rerun()  # Reload the app to bypass the password form
                 else:
                     st.error("Incorrect Password")
         return False
