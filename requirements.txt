@@ -9,6 +9,8 @@ pyspellchecker==0.7.1
 language-tool-python==2.7.0
 requests==2.32.3
 setuptools>=65.0
+streamlit==1.20.0
+
 
 
 
