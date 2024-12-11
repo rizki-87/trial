@@ -156,9 +156,7 @@ def password_protection():
             if submitted:
                 if password_input == PREDEFINED_PASSWORD:
                     st.session_state.authenticated = True
-                    st.experimental_set_query_params(authenticated="true")  # Update URL query parameters
-                    st.success("Access Granted! Reloading...")
-                    st.stop()  # Stop further processing to simulate page reload
+                    st.success("Access Granted!")
                 else:
                     st.error("Incorrect Password")
         return False
