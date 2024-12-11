@@ -156,7 +156,7 @@ def password_protection():
             if submitted:
                 if password_input == PREDEFINED_PASSWORD:
                     st.session_state.authenticated = True
-                    st.success("Access Granted!")
+                    st.experimental_rerun()  # Reload the app to bypass the password screen
                 else:
                     st.error("Incorrect Password")
         return False
