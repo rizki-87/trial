@@ -177,31 +177,28 @@ def main():
             highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
 
             # Initialize progress bar and percentage display
+            progress_container = st.empty()  # Placeholder for the progress text and bar
             progress_bar = st.progress(0)
-            progress_text = st.empty()  # Placeholder for dynamic text above progress bar
             total_steps = 4  # Total validation tasks
 
+            # Define a helper function to update progress
+            def update_progress(task_name, current_step):
+                percentage = int((current_step / total_steps) * 100)
+                progress_container.markdown(f"**Progress: {percentage}% - {task_name}**")
+                progress_bar.progress(current_step / total_steps)
+
             # Run validations with progress updates
-            progress_text.markdown("**Progress: 0%**")
-            st.write("Running grammar validation...")
+            update_progress("Running grammar validation...", 1)
             grammar_issues = validate_grammar(temp_ppt_path)
-            progress_bar.progress(1 / total_steps)
-            progress_text.markdown("**Progress: 25%**")
 
-            st.write("Running punctuation validation...")
+            update_progress("Running punctuation validation...", 2)
             punctuation_issues = validate_punctuation(temp_ppt_path)
-            progress_bar.progress(2 / total_steps)
-            progress_text.markdown("**Progress: 50%**")
 
-            st.write("Running spelling validation...")
+            update_progress("Running spelling validation...", 3)
             spelling_issues = validate_spelling(temp_ppt_path)
-            progress_bar.progress(3 / total_steps)
-            progress_text.markdown("**Progress: 75%**")
 
-            st.write("Running font validation...")
+            update_progress("Running font validation...", 4)
             font_issues = validate_fonts(temp_ppt_path, default_font)
-            progress_bar.progress(4 / total_steps)
-            progress_text.markdown("**Progress: 100%**")
 
             # Combine results and save output
             combined_issues = grammar_issues + punctuation_issues + spelling_issues + font_issues
