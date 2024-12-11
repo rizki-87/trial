@@ -33,33 +33,37 @@ def highlight_ppt(input_ppt, output_ppt, issues):
                             run.font.color.rgb = RGBColor(255, 255, 0)  # Highlight text in yellow
     presentation.save(output_ppt)
 
-# Validation functions
+# Function to validate grammar issues
 def validate_grammar(input_ppt):
     presentation = Presentation(input_ppt)
     grammar_issues = []
+
     for slide_index, slide in enumerate(presentation.slides, start=1):
         for shape in slide.shapes:
             if shape.has_text_frame:
                 for paragraph in shape.text_frame.paragraphs:
                     for run in paragraph.runs:
                         text = run.text.strip()
-                        if text and grammar_tool:
-                            matches = grammar_tool.check(text)
-                            if matches:
-                                corrected = language_tool_python.utils.correct(text, matches)
-                                if corrected != text:
-                                    grammar_issues.append({
-                                        'slide': slide_index,
-                                        'issue': 'Grammar Error',
-                                        'text': text,
-                                        'corrected': corrected
-                                    })
+                        if text:
+                            if grammar_tool:
+                                matches = grammar_tool.check(text)
+                                if matches:
+                                    corrected = language_tool_python.utils.correct(text, matches)
+                                    if corrected != text:  # Log only if correction is made
+                                        grammar_issues.append({
+                                            'slide': slide_index,
+                                            'issue': 'Grammar Error',
+                                            'text': text,
+                                            'corrected': corrected
+                                        })
     return grammar_issues
 
+# Function to detect and correct misspellings
 def validate_spelling(input_ppt):
     presentation = Presentation(input_ppt)
     spelling_issues = []
     spell = SpellChecker()
+
     for slide_index, slide in enumerate(presentation.slides, start=1):
         for shape in slide.shapes:
             if shape.has_text_frame:
@@ -71,7 +75,7 @@ def validate_spelling(input_ppt):
                                 clean_word = word.strip(string.punctuation)
                                 if clean_word and clean_word.lower() not in spell:
                                     correction = spell.correction(clean_word)
-                                    if correction:
+                                    if correction:  # Only log valid corrections
                                         spelling_issues.append({
                                             'slide': slide_index,
                                             'issue': 'Misspelling',
@@ -80,9 +84,11 @@ def validate_spelling(input_ppt):
                                         })
     return spelling_issues
 
+# Function to validate fonts
 def validate_fonts(input_ppt, default_font):
     presentation = Presentation(input_ppt)
     font_issues = []
+
     for slide_index, slide in enumerate(presentation.slides, start=1):
         for shape in slide.shapes:
             if shape.has_text_frame:
@@ -97,11 +103,14 @@ def validate_fonts(input_ppt, default_font):
                             })
     return font_issues
 
+# Function to validate punctuation
 def validate_punctuation(input_ppt):
     presentation = Presentation(input_ppt)
     punctuation_issues = []
+
     excessive_punctuation_pattern = r"([!?.:,;]{2,})"
     repeated_word_pattern = r"\b(\w+)\s+\1\b"
+
     for slide_index, slide in enumerate(presentation.slides, start=1):
         for shape in slide.shapes:
             if shape.has_text_frame:
@@ -132,20 +141,25 @@ def save_to_csv(issues, output_csv):
         writer.writeheader()
         writer.writerows(issues)
 
-# Password protection
+# Set predefined password
 PREDEFINED_PASSWORD = "securepassword123"
+
+# Function to handle password protection
 def password_protection():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
+
     if not st.session_state.authenticated:
         with st.form("password_form", clear_on_submit=True):
             password_input = st.text_input("Enter Password", type="password")
             submitted = st.form_submit_button("Submit")
-            if submitted and password_input == PREDEFINED_PASSWORD:
-                st.session_state.authenticated = True
-                st.experimental_rerun()
-            elif submitted:
-                st.error("Incorrect Password")
+            if submitted:
+                if password_input == PREDEFINED_PASSWORD:
+                    st.session_state.authenticated = True
+                    st.success("Access Granted! Please proceed.")
+                    st.stop()  # Prevent further execution until next page load
+                else:
+                    st.error("Incorrect Password")
         return False
     return True
 
@@ -153,6 +167,8 @@ def password_protection():
 def main():
     if not password_protection():
         return
+
+    # CSS to hide Streamlit footer and profile menu
     hide_streamlit_style = """
     <style>
     footer {visibility: hidden;}
@@ -160,45 +176,67 @@ def main():
     </style>
     """
     st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
     st.title("PPT Validator")
+
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
     font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
     default_font = st.selectbox("Select the default font for validation", font_options)
+
     if uploaded_file:
+        if "uploaded_file" not in st.session_state or st.session_state.uploaded_file != uploaded_file:
+            st.session_state.uploaded_file = uploaded_file
+            st.session_state.pop('csv_path', None)
+            st.session_state.pop('ppt_path', None)
+
         if st.button("Run Validation"):
             with tempfile.TemporaryDirectory() as tmpdir:
                 temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"
                 with open(temp_ppt_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
+
                 csv_output_path = Path(tmpdir) / "validation_report.csv"
                 highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
+
                 progress_container = st.empty()
                 progress_bar = st.progress(0)
                 total_steps = 4
+
                 def update_progress(task_name, current_step):
                     percentage = int((current_step / total_steps) * 100)
                     progress_container.markdown(f"**Progress: {percentage}% - {task_name}**")
                     progress_bar.progress(current_step / total_steps)
+
                 update_progress("Running grammar validation...", 1)
                 grammar_issues = validate_grammar(temp_ppt_path)
+
                 update_progress("Running punctuation validation...", 2)
                 punctuation_issues = validate_punctuation(temp_ppt_path)
+
                 update_progress("Running spelling validation...", 3)
                 spelling_issues = validate_spelling(temp_ppt_path)
+
                 update_progress("Running font validation...", 4)
                 font_issues = validate_fonts(temp_ppt_path, default_font)
+
                 combined_issues = grammar_issues + punctuation_issues + spelling_issues + font_issues
+
                 save_to_csv(combined_issues, csv_output_path)
                 highlight_ppt(temp_ppt_path, highlighted_ppt_path, combined_issues)
+
                 st.session_state['csv_path'] = csv_output_path.read_bytes()
                 st.session_state['ppt_path'] = highlighted_ppt_path.read_bytes()
+
                 st.success("Validation completed!")
-        if 'csv_path' in st.session_state:
-            st.download_button("Download Validation Report (CSV)", st.session_state['csv_path'],
-                               file_name="validation_report.csv")
-        if 'ppt_path' in st.session_state:
-            st.download_button("Download Highlighted PPT", st.session_state['ppt_path'],
-                               file_name="highlighted_presentation.pptx")
+
+    if 'csv_path' in st.session_state:
+        st.download_button("Download Validation Report (CSV)", st.session_state['csv_path'],
+                           file_name="validation_report.csv")
+
+    if 'ppt_path' in st.session_state:
+        st.download_button("Download Highlighted PPT", st.session_state['ppt_path'],
+                           file_name="highlighted_presentation.pptx")
+
 
 if __name__ == "__main__":
     main()
