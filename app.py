@@ -162,7 +162,6 @@ def password_protection():
         return False
     return True
 
-# Main Streamlit app
 def main():
     # CSS to hide Streamlit footer and profile menu
     hide_streamlit_style = """
@@ -172,6 +171,10 @@ def main():
     </style>
     """
     st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+    # Add password protection at the very start
+    if not password_protection():
+        return  # Stop further execution if the password is incorrect
 
     st.title("PPT Validator")
 
@@ -242,6 +245,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
