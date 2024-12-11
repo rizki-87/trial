@@ -156,19 +156,22 @@ def password_protection():
             if submitted:
                 if password_input == PREDEFINED_PASSWORD:
                     st.session_state.authenticated = True
-                    st.experimental_rerun()  # Refresh page after authentication
+                    # Gunakan metode untuk refresh tanpa `st.experimental_rerun`
+                    st.success("Access Granted! Reloading...")
+                    st.stop()  # Berhenti memproses kode setelah akses diberikan
                 else:
                     st.error("Incorrect Password")
         return False
     return True
 
+
 # Main function
 def main():
-    # Add password protection
+    # Tambahkan perlindungan password
     if not password_protection():
-        return
+        return  # Hentikan eksekusi jika password salah atau belum diisi
 
-    # CSS to hide Streamlit footer and profile menu
+    # CSS untuk menyembunyikan footer Streamlit
     hide_streamlit_style = """
     <style>
     footer {visibility: hidden;}
@@ -179,7 +182,7 @@ def main():
 
     st.title("PPT Validator")
 
-    # File uploader and font selector
+    # File uploader dan pilihan font default
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
     font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
     default_font = st.selectbox("Select the default font for validation", font_options)
@@ -187,8 +190,8 @@ def main():
     if uploaded_file:
         if "uploaded_file" not in st.session_state or st.session_state.uploaded_file != uploaded_file:
             st.session_state.uploaded_file = uploaded_file
-            st.session_state.pop('csv_path', None, default=None)
-            st.session_state.pop('ppt_path', None, default=None)
+            st.session_state.pop('csv_path', None)
+            st.session_state.pop('ppt_path', None)
 
         if st.button("Run Validation"):
             with tempfile.TemporaryDirectory() as tmpdir:
