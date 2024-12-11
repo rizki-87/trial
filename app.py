@@ -156,20 +156,20 @@ def password_protection():
             if submitted:
                 if password_input == PREDEFINED_PASSWORD:
                     st.session_state.authenticated = True
-                    # Gunakan metode untuk refresh tanpa `st.experimental_rerun`
-                    st.success("Access Granted! Reloading...")
-                    st.stop()  # Berhenti memproses kode setelah akses diberikan
+                    st.experimental_set_query_params(authenticated="true")  # Setel parameter query untuk menjaga status
+                    st.success("Access Granted! Loading...")
                 else:
                     st.error("Incorrect Password")
         return False
     return True
 
 
+
 # Main function
 def main():
-    # Tambahkan perlindungan password
+    # Proteksi password di awal
     if not password_protection():
-        return  # Hentikan eksekusi jika password salah atau belum diisi
+        return  # Hentikan eksekusi jika password salah atau belum dimasukkan
 
     # CSS untuk menyembunyikan footer Streamlit
     hide_streamlit_style = """
