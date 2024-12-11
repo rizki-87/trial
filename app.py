@@ -144,25 +144,30 @@ def save_to_csv(issues, output_csv):
 # Set predefined password
 PREDEFINED_PASSWORD = "securepassword123"
 
-# Password protection function
+# Function to handle password protection
 def password_protection():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
 
     if not st.session_state.authenticated:
-        with st.form("password_form"):
+        with st.form("password_form", clear_on_submit=True):
             password_input = st.text_input("Enter Password", type="password")
             submitted = st.form_submit_button("Submit")
             if submitted:
                 if password_input == PREDEFINED_PASSWORD:
                     st.session_state.authenticated = True
-                    st.experimental_rerun()  # Reload the app to bypass the password screen
+                    st.experimental_rerun()  # Refresh page after authentication
                 else:
                     st.error("Incorrect Password")
         return False
     return True
 
+# Main function
 def main():
+    # Add password protection
+    if not password_protection():
+        return
+
     # CSS to hide Streamlit footer and profile menu
     hide_streamlit_style = """
     <style>
@@ -172,69 +177,64 @@ def main():
     """
     st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-    # Add password protection at the very start
-    if not password_protection():
-        return  # Stop further execution if the password is incorrect
-
     st.title("PPT Validator")
 
-    if "uploaded_file" not in st.session_state:
-        st.session_state.uploaded_file = None
-
+    # File uploader and font selector
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
     font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
     default_font = st.selectbox("Select the default font for validation", font_options)
 
     if uploaded_file:
-        if st.session_state.uploaded_file != uploaded_file:
+        if "uploaded_file" not in st.session_state or st.session_state.uploaded_file != uploaded_file:
             st.session_state.uploaded_file = uploaded_file
-            st.session_state.pop('csv_path', None)
-            st.session_state.pop('ppt_path', None)
+            st.session_state.pop('csv_path', None, default=None)
+            st.session_state.pop('ppt_path', None, default=None)
 
-    if uploaded_file and st.button("Run Validation"):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"
-            with open(temp_ppt_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
+        if st.button("Run Validation"):
+            with tempfile.TemporaryDirectory() as tmpdir:
+                temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"
+                with open(temp_ppt_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
 
-            csv_output_path = Path(tmpdir) / "validation_report.csv"
-            highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
+                csv_output_path = Path(tmpdir) / "validation_report.csv"
+                highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
 
-            # Initialize progress bar and percentage display
-            progress_container = st.empty()  # Placeholder for the progress text and bar
-            progress_bar = st.progress(0)
-            total_steps = 4  # Total validation tasks
+                # Initialize progress bar and percentage display
+                progress_container = st.empty()
+                progress_bar = st.progress(0)
+                total_steps = 4  # Total validation tasks
 
-            # Define a helper function to update progress
-            def update_progress(task_name, current_step):
-                percentage = int((current_step / total_steps) * 100)
-                progress_container.markdown(f"**Progress: {percentage}% - {task_name}**")
-                progress_bar.progress(current_step / total_steps)
+                # Helper function to update progress
+                def update_progress(task_name, current_step):
+                    percentage = int((current_step / total_steps) * 100)
+                    progress_container.markdown(f"**Progress: {percentage}% - {task_name}**")
+                    progress_bar.progress(current_step / total_steps)
 
-            # Run validations with progress updates
-            update_progress("Running grammar validation...", 1)
-            grammar_issues = validate_grammar(temp_ppt_path)
+                # Run validations
+                update_progress("Running grammar validation...", 1)
+                grammar_issues = validate_grammar(temp_ppt_path)
 
-            update_progress("Running punctuation validation...", 2)
-            punctuation_issues = validate_punctuation(temp_ppt_path)
+                update_progress("Running punctuation validation...", 2)
+                punctuation_issues = validate_punctuation(temp_ppt_path)
 
-            update_progress("Running spelling validation...", 3)
-            spelling_issues = validate_spelling(temp_ppt_path)
+                update_progress("Running spelling validation...", 3)
+                spelling_issues = validate_spelling(temp_ppt_path)
 
-            update_progress("Running font validation...", 4)
-            font_issues = validate_fonts(temp_ppt_path, default_font)
+                update_progress("Running font validation...", 4)
+                font_issues = validate_fonts(temp_ppt_path, default_font)
 
-            # Combine results and save output
-            combined_issues = grammar_issues + punctuation_issues + spelling_issues + font_issues
+                # Combine results and save output
+                combined_issues = grammar_issues + punctuation_issues + spelling_issues + font_issues
 
-            save_to_csv(combined_issues, csv_output_path)
-            highlight_ppt(temp_ppt_path, highlighted_ppt_path, combined_issues)
+                save_to_csv(combined_issues, csv_output_path)
+                highlight_ppt(temp_ppt_path, highlighted_ppt_path, combined_issues)
 
-            st.session_state['csv_path'] = csv_output_path.read_bytes()
-            st.session_state['ppt_path'] = highlighted_ppt_path.read_bytes()
+                st.session_state['csv_path'] = csv_output_path.read_bytes()
+                st.session_state['ppt_path'] = highlighted_ppt_path.read_bytes()
 
-            st.success("Validation completed!")
+                st.success("Validation completed!")
 
+    # Display download buttons
     if 'csv_path' in st.session_state:
         st.download_button("Download Validation Report (CSV)", st.session_state['csv_path'],
                            file_name="validation_report.csv")
@@ -243,9 +243,9 @@ def main():
         st.download_button("Download Highlighted PPT", st.session_state['ppt_path'],
                            file_name="highlighted_presentation.pptx")
 
+
 if __name__ == "__main__":
     main()
-
 
 
 
