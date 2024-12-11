@@ -141,6 +141,27 @@ def save_to_csv(issues, output_csv):
         writer.writeheader()
         writer.writerows(issues)
 
+# Set predefined password
+PREDEFINED_PASSWORD = "securepassword123"
+
+# Password protection function
+def password_protection():
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if not st.session_state.authenticated:
+        with st.form("password_form"):
+            password_input = st.text_input("Enter Password", type="password")
+            submitted = st.form_submit_button("Submit")
+            if submitted:
+                if password_input == PREDEFINED_PASSWORD:
+                    st.session_state.authenticated = True
+                    st.success("Access Granted!")
+                else:
+                    st.error("Incorrect Password")
+        return False
+    return True
+
 # Main Streamlit app
 def main():
     # CSS to hide Streamlit footer and profile menu
