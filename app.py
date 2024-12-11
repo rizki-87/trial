@@ -156,8 +156,9 @@ def password_protection():
             if submitted:
                 if password_input == PREDEFINED_PASSWORD:
                     st.session_state.authenticated = True
-                    st.experimental_set_query_params(authenticated="true")  # Setel parameter query untuk menjaga status
+                    st.query_params(authenticated="true")  # Menggunakan metode yang baru
                     st.success("Access Granted! Loading...")
+                    st.experimental_rerun()  # Langsung pindah tanpa tambahan klik
                 else:
                     st.error("Incorrect Password")
         return False
