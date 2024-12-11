@@ -176,11 +176,28 @@ def main():
             csv_output_path = Path(tmpdir) / "validation_report.csv"
             highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
 
-            grammar_issues = validate_grammar(temp_ppt_path)
-            punctuation_issues = validate_punctuation(temp_ppt_path)
-            spelling_issues = validate_spelling(temp_ppt_path)
-            font_issues = validate_fonts(temp_ppt_path, default_font)
+            # Initialize progress bar
+            progress = st.progress(0)
+            total_steps = 4  # Number of validation steps
 
+            # Run validations
+            st.write("Running grammar validation...")
+            grammar_issues = validate_grammar(temp_ppt_path)
+            progress.progress(1 / total_steps)
+
+            st.write("Running punctuation validation...")
+            punctuation_issues = validate_punctuation(temp_ppt_path)
+            progress.progress(2 / total_steps)
+
+            st.write("Running spelling validation...")
+            spelling_issues = validate_spelling(temp_ppt_path)
+            progress.progress(3 / total_steps)
+
+            st.write("Running font validation...")
+            font_issues = validate_fonts(temp_ppt_path, default_font)
+            progress.progress(4 / total_steps)
+
+            # Combine results and save output
             combined_issues = grammar_issues + punctuation_issues + spelling_issues + font_issues
 
             save_to_csv(combined_issues, csv_output_path)
