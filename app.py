@@ -157,7 +157,7 @@ def main():
     if not password_protection():
         return
 
-    st.title("PPT Validator - Parallel Processing")
+    st.title("PPT Validator ")
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
     font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
     default_font = st.selectbox("Select the default font for validation", font_options)
