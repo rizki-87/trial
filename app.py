@@ -9,7 +9,7 @@ import re
 import string
 from pptx.dml.color import RGBColor
 
-# LanguageTool API initialization
+# Initialize LanguageTool
 def initialize_language_tool():
     try:
         return language_tool_python.LanguageToolPublicAPI('en-US')
@@ -19,49 +19,22 @@ def initialize_language_tool():
 
 grammar_tool = initialize_language_tool()
 
-# Custom dictionary for technical terms
+# Custom dictionary
 TECHNICAL_TERMS = {
-    "TensorFlow", "Keras", "Scikit-learn", "NumPy", "Pandas", "Matplotlib", "Seaborn", 
-    "Jupyter", "Anaconda", "Deep Learning", "Neural Network", "Reinforcement Learning",
-    "Supervised Learning", "Unsupervised Learning", "Natural Language Processing", 
-    "Computer Vision", "Data Science", "Big Data", "Data Mining", "Feature Engineering",
-    "Hyperparameter", "Gradient Descent", "Convolutional Neural Network", 
-    "Recurrent Neural Network", "Support Vector Machine", "Decision Tree", "Random Forest", 
-    "Ensemble Learning", "Clustering", "Dimensionality Reduction", "Principal Component Analysis",
-    "Exploratory Data Analysis", "Model Evaluation", "Cross-Validation", "Overfitting", 
-    "Underfitting", "Batch Normalization", "Dropout", "Activation Function", "Loss Function",
-    "Backpropagation", "Transfer Learning", "Generative Adversarial Network", "Autoencoder",
-    "Tokenization", "Embedding", "Word2Vec", "BERT", "GPT-3", "OpenCV", "Flask", "Django", 
-    "REST API", "GraphQL", "SQL", "NoSQL", "MongoDB", "PostgreSQL", "MySQL", "Firebase", 
-    "Cloud Computing", "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes", "CI/CD", 
-    "DevOps", "Agile", "Scrum", "Kanban", "Git", "GitHub", "Bitbucket", "Version Control",
-    "API", "SDK", "Microservices", "Blockchain", "Cryptocurrency", "IoT", "Edge Computing", 
-    "Quantum Computing", "Augmented Reality", "Virtual Reality", "3D Printing", "Cybersecurity",
-    "Phishing", "Malware", "SSL", "Encryption", "Hashing", "GDPR"
+    "TensorFlow", "Keras", "Scikit-learn", "NumPy", "Pandas", "Matplotlib", "OpenAI",
+    "GPT-3", "Deep Learning", "Neural Network", "14+", "15+", "50+", "100+", "Data Science"
 }
-
-# Add number symbols
 NUMERIC_TERMS = {f"{i}+" for i in range(1, 101)}
 
-# Initialize SpellChecker with custom dictionary
+# Initialize SpellChecker
 spell = SpellChecker()
 spell.word_frequency.load_words(TECHNICAL_TERMS.union(NUMERIC_TERMS))
 
-# Function to highlight issues in a PPT
-def highlight_ppt(input_ppt, output_ppt, issues):
-    presentation = Presentation(input_ppt)
-    for issue in issues:
-        slide_index = issue['slide'] - 1
-        slide = presentation.slides[slide_index]
-        for shape in slide.shapes:
-            if shape.has_text_frame:
-                for paragraph in shape.text_frame.paragraphs:
-                    for run in paragraph.runs:
-                        if issue['text'] in run.text:
-                            run.font.color.rgb = RGBColor(255, 255, 0)
-    presentation.save(output_ppt)
+# Skip validation for technical terms and numeric patterns
+def is_exempted(word):
+    return word in TECHNICAL_TERMS or re.match(r"^\d+\+$", word)
 
-# Combined spelling check function
+# Spelling Validation
 def validate_spelling(input_ppt, progress_callback):
     presentation = Presentation(input_ppt)
     spelling_issues = []
@@ -72,12 +45,12 @@ def validate_spelling(input_ppt, progress_callback):
             if shape.has_text_frame:
                 for paragraph in shape.text_frame.paragraphs:
                     for run in paragraph.runs:
-                        words = run.text.strip().split()
+                        words = run.text.split()
                         for word in words:
                             clean_word = word.strip(string.punctuation)
-
-                            # Check with custom SpellChecker
-                            if clean_word and clean_word.lower() not in spell:
+                            if is_exempted(clean_word):  # Skip exempted words
+                                continue
+                            if clean_word.lower() not in spell:
                                 correction = spell.correction(clean_word)
                                 if correction and correction != clean_word:
                                     spelling_issues.append({
@@ -86,23 +59,31 @@ def validate_spelling(input_ppt, progress_callback):
                                         'text': word,
                                         'corrected': correction
                                     })
-                                else:
-                                    # Fallback to LanguageTool for more accuracy
-                                    matches = grammar_tool.check(clean_word)
-                                    if matches:
-                                        corrected = matches[0].replacements[0] if matches[0].replacements else None
-                                        if corrected and corrected != clean_word:
-                                            spelling_issues.append({
-                                                'slide': slide_index,
-                                                'issue': 'Misspelling',
-                                                'text': word,
-                                                'corrected': corrected
-                                            })
-
         progress_callback(slide_index, total_slides, "Spelling Validation")
     return spelling_issues
 
-# Password protection
+# Highlight issues in PPT
+def highlight_ppt(input_ppt, output_ppt, issues):
+    presentation = Presentation(input_ppt)
+    for issue in issues:
+        slide_index = issue['slide'] - 1  # Slide index starts at 0
+        slide = presentation.slides[slide_index]
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                for paragraph in shape.text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        if issue['text'] in run.text:
+                            run.font.color.rgb = RGBColor(255, 255, 0)  # Highlight text in yellow
+    presentation.save(output_ppt)
+
+# Save issues to CSV
+def save_to_csv(issues, output_csv):
+    with open(output_csv, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.DictWriter(file, fieldnames=['slide', 'issue', 'text', 'corrected'])
+        writer.writeheader()
+        writer.writerows(issues)
+
+# Password Protection
 PREDEFINED_PASSWORD = "securepassword123"
 
 def password_protection():
@@ -122,50 +103,57 @@ def password_protection():
         return False
     return True
 
-# Main function
+# Main Function
 def main():
     if not password_protection():
         return
 
     st.title("PPT Validator")
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
-    font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
-    default_font = st.selectbox("Select the default font for validation", font_options)
 
-    if uploaded_file and st.button("Run Validation"):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"
-            with open(temp_ppt_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
+    if uploaded_file:
+        if "uploaded_file" not in st.session_state or st.session_state.uploaded_file != uploaded_file:
+            st.session_state.uploaded_file = uploaded_file
+            st.session_state.pop("csv_path", None)
+            st.session_state.pop("ppt_path", None)
 
-            csv_output_path = Path(tmpdir) / "validation_report.csv"
-            highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
-            progress_bar = st.progress(0)
-            progress_text = st.empty()
+        if st.button("Run Validation"):
+            with tempfile.TemporaryDirectory() as tmpdir:
+                temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"
+                with open(temp_ppt_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
 
-            def update_progress(current, total, task_name):
-                percentage = int((current / total) * 100)
-                progress_bar.progress(percentage / 100)
-                progress_text.text(f"{task_name}: {percentage}%")
+                csv_output_path = Path(tmpdir) / "validation_report.csv"
+                highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
+                progress_bar = st.progress(0)
+                progress_text = st.empty()
 
-            # Run validations
-            spelling_issues = validate_spelling(temp_ppt_path, update_progress)
+                def update_progress(current, total, task_name):
+                    percentage = int((current / total) * 100)
+                    progress_bar.progress(percentage / 100)
+                    progress_text.text(f"{task_name}: {percentage}%")
 
-            combined_issues = spelling_issues
-            save_to_csv(combined_issues, csv_output_path)
-            highlight_ppt(temp_ppt_path, highlighted_ppt_path, combined_issues)
+                # Run validations
+                spelling_issues = validate_spelling(temp_ppt_path, update_progress)
+                combined_issues = spelling_issues
 
-            st.success("Validation completed!")
-            st.download_button("Download Validation Report (CSV)", csv_output_path.read_bytes(),
-                               file_name="validation_report.csv")
-            st.download_button("Download Highlighted PPT", highlighted_ppt_path.read_bytes(),
-                               file_name="highlighted_presentation.pptx")
+                save_to_csv(combined_issues, csv_output_path)
+                highlight_ppt(temp_ppt_path, highlighted_ppt_path, combined_issues)
 
-def save_to_csv(issues, output_csv):
-    with open(output_csv, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=['slide', 'issue', 'text', 'corrected'])
-        writer.writeheader()
-        writer.writerows(issues)
+                # Store files in session state
+                st.session_state["csv_path"] = csv_output_path.read_bytes()
+                st.session_state["ppt_path"] = highlighted_ppt_path.read_bytes()
+
+                st.success("Validation completed!")
+
+    # Display download buttons without removing results
+    if "csv_path" in st.session_state:
+        st.download_button("Download Validation Report (CSV)", st.session_state["csv_path"],
+                           file_name="validation_report.csv")
+
+    if "ppt_path" in st.session_state:
+        st.download_button("Download Highlighted PPT", st.session_state["ppt_path"],
+                           file_name="highlighted_presentation.pptx")
 
 if __name__ == "__main__":
     main()
