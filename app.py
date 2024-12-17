@@ -21,7 +21,43 @@ def initialize_language_tool():
 grammar_tool = initialize_language_tool()
 
 # Custom dictionary
-TECHNICAL_TERMS = {"TensorFlow", "ML", "OpenAI", "GPT-3", "DALL-E", "NumPy"}
+TECHNICAL_TERMS = {
+      "TensorFlow","Caret","ML","DALL-E","MLOps","PyTorch","MENA", "Keras", "Scikit-learn", "NumPy", "Pandas", "Matplotlib", "OpenAI",
+      "GPT-3", "Deep Learning", "Neural Network", "Data Science", "Seaborn", "Jupyter",
+      "Anaconda", "Reinforcement Learning", "Supervised Learning", "Unsupervised Learning",
+      "Natural Language Processing", "Computer Vision", "Big Data", "Data Mining",
+      "Feature Engineering", "Hyperparameter", "Gradient Descent", "Convolutional Neural Network",
+      "Recurrent Neural Network", "Support Vector Machine", "Decision Tree", "Random Forest",
+      "Ensemble Learning", "Clustering", "Dimensionality Reduction", "Principal Component Analysis",
+      "Exploratory Data Analysis", "Model Evaluation", "Cross-Validation", "Overfitting",
+      "Underfitting", "Batch Normalization", "Dropout", "Activation Function", "Loss Function",
+      "Backpropagation", "Transfer Learning", "Generative Adversarial Network", "Autoencoder",
+      "Tokenization", "Embedding", "Word2Vec", "BERT", "OpenCV", "Flask", "Django",
+      "REST API", "GraphQL", "SQL", "NoSQL", "MongoDB", "PostgreSQL", "MySQL", "Firebase",
+      "Cloud Computing", "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes", "CI/CD",
+      "DevOps", "Agile", "Scrum", "Kanban", "Git", "GitHub", "Bitbucket", "Version Control",
+      "API", "SDK", "Microservices", "Blockchain", "Cryptocurrency", "IoT", "Edge Computing",
+      "Quantum Computing", "Augmented Reality", "Virtual Reality", "3D Printing", "Cybersecurity",
+      "Penetration Testing", "Phishing", "Malware", "Ransomware", "Firewall", "VPN", "SSL",
+      "Encryption", "Decryption", "Hashing", "Digital Signature", "Data Privacy", "GDPR",
+      "1+", "2+", "3+", "4+", "5+", "6+", "7+", "8+", "9+", "10+", "11+", "12+", "13+",
+      "14+", "15+", "16+", "17+", "18+", "19+", "20+", "21+", "22+", "23+", "24+", "25+",
+      "26+", "27+", "28+", "29+", "30+", "31+", "32+", "33+", "34+", "35+", "36+", "37+",
+      "38+", "39+", "40+", "41+", "42+", "43+", "44+", "45+", "46+", "47+", "48+", "49+",
+      "50+", "51+", "52+", "53+", "54+", "55+", "56+", "57+", "58+", "59+", "60+", "61+",
+      "62+", "63+", "64+", "65+", "66+", "67+", "68+", "69+", "70+", "71+", "72+", "73+",
+      "74+", "75+", "76+", "77+", "78+", "79+", "80+", "81+", "82+", "83+", "84+", "85+",
+      "86+", "87+", "88+", "89+", "90+", "91+", "92+", "93+", "94+", "95+", "96+", "97+",
+      "98+", "99+", "100+", "+1", "+2", "+3", "+4", "+5", "+6", "+7", "+8", "+9", "+10",
+      "+11", "+12", "+13", "+14", "+15", "+16", "+17", "+18", "+19", "+20", "+21", "+22",
+      "+23", "+24", "+25", "+26", "+27", "+28", "+29", "+30", "+31", "+32", "+33", "+34",
+      "+35", "+36", "+37", "+38", "+39", "+40", "+41", "+42", "+43", "+44", "+45", "+46",
+      "+47", "+48", "+49", "+50", "+51", "+52", "+53", "+54", "+55", "+56", "+57", "+58",
+      "+59", "+60", "+61", "+62", "+63", "+64", "+65", "+66", "+67", "+68", "+69", "+70",
+      "+71", "+72", "+73", "+74", "+75", "+76", "+77", "+78", "+79", "+80", "+81", "+82",
+      "+83", "+84", "+85", "+86", "+87", "+88", "+89", "+90", "+91", "+92", "+93", "+94",
+      "+95", "+96", "+97", "+98", "+99", "+100"
+  }
 NUMERIC_TERMS = {f"{i}+" for i in range(1, 101)}
 
 # Initialize SpellChecker
