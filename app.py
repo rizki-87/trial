@@ -48,7 +48,7 @@ def validate_spelling(input_ppt, progress_callback):
                         words = run.text.split()
                         for word in words:
                             clean_word = word.strip(string.punctuation)
-                            if is_exempted(clean_word):  # Skip exempted words
+                            if is_exempted(clean_word):
                                 continue
                             if clean_word.lower() not in spell:
                                 correction = spell.correction(clean_word)
@@ -62,18 +62,39 @@ def validate_spelling(input_ppt, progress_callback):
         progress_callback(slide_index, total_slides, "Spelling Validation")
     return spelling_issues
 
+# Font Validation
+def validate_fonts(input_ppt, default_font, progress_callback):
+    presentation = Presentation(input_ppt)
+    font_issues = []
+    total_slides = len(presentation.slides)
+
+    for slide_index, slide in enumerate(presentation.slides, start=1):
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                for paragraph in shape.text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        if run.text.strip() and run.font.name != default_font:
+                            font_issues.append({
+                                'slide': slide_index,
+                                'issue': 'Inconsistent Font',
+                                'text': run.text,
+                                'corrected': f"Expected: {default_font}, Found: {run.font.name}"
+                            })
+        progress_callback(slide_index, total_slides, "Font Validation")
+    return font_issues
+
 # Highlight issues in PPT
 def highlight_ppt(input_ppt, output_ppt, issues):
     presentation = Presentation(input_ppt)
     for issue in issues:
-        slide_index = issue['slide'] - 1  # Slide index starts at 0
+        slide_index = issue['slide'] - 1
         slide = presentation.slides[slide_index]
         for shape in slide.shapes:
             if shape.has_text_frame:
                 for paragraph in shape.text_frame.paragraphs:
                     for run in paragraph.runs:
                         if issue['text'] in run.text:
-                            run.font.color.rgb = RGBColor(255, 255, 0)  # Highlight text in yellow
+                            run.font.color.rgb = RGBColor(255, 255, 0)
     presentation.save(output_ppt)
 
 # Save issues to CSV
@@ -110,43 +131,38 @@ def main():
 
     st.title("PPT Validator")
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
+    font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
+    default_font = st.selectbox("Select the default font for validation", font_options)
 
-    if uploaded_file:
-        if "uploaded_file" not in st.session_state or st.session_state.uploaded_file != uploaded_file:
-            st.session_state.uploaded_file = uploaded_file
-            st.session_state.pop("csv_path", None)
-            st.session_state.pop("ppt_path", None)
+    if uploaded_file and st.button("Run Validation"):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"
+            with open(temp_ppt_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
 
-        if st.button("Run Validation"):
-            with tempfile.TemporaryDirectory() as tmpdir:
-                temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"
-                with open(temp_ppt_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
+            csv_output_path = Path(tmpdir) / "validation_report.csv"
+            highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
+            progress_bar = st.progress(0)
+            progress_text = st.empty()
 
-                csv_output_path = Path(tmpdir) / "validation_report.csv"
-                highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
-                progress_bar = st.progress(0)
-                progress_text = st.empty()
+            def update_progress(current, total, task_name):
+                percentage = int((current / total) * 100)
+                progress_bar.progress(percentage / 100)
+                progress_text.text(f"{task_name}: {percentage}%")
 
-                def update_progress(current, total, task_name):
-                    percentage = int((current / total) * 100)
-                    progress_bar.progress(percentage / 100)
-                    progress_text.text(f"{task_name}: {percentage}%")
+            # Run validations
+            spelling_issues = validate_spelling(temp_ppt_path, update_progress)
+            font_issues = validate_fonts(temp_ppt_path, default_font, update_progress)
 
-                # Run validations
-                spelling_issues = validate_spelling(temp_ppt_path, update_progress)
-                combined_issues = spelling_issues
+            combined_issues = spelling_issues + font_issues
+            save_to_csv(combined_issues, csv_output_path)
+            highlight_ppt(temp_ppt_path, highlighted_ppt_path, combined_issues)
 
-                save_to_csv(combined_issues, csv_output_path)
-                highlight_ppt(temp_ppt_path, highlighted_ppt_path, combined_issues)
+            st.session_state["csv_path"] = csv_output_path.read_bytes()
+            st.session_state["ppt_path"] = highlighted_ppt_path.read_bytes()
 
-                # Store files in session state
-                st.session_state["csv_path"] = csv_output_path.read_bytes()
-                st.session_state["ppt_path"] = highlighted_ppt_path.read_bytes()
+            st.success("Validation completed!")
 
-                st.success("Validation completed!")
-
-    # Display download buttons without removing results
     if "csv_path" in st.session_state:
         st.download_button("Download Validation Report (CSV)", st.session_state["csv_path"],
                            file_name="validation_report.csv")
@@ -157,6 +173,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
