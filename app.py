@@ -73,6 +73,10 @@ def validate_spelling(input_ppt, progress_callback):
     spelling_issues = []
     total_slides = len(presentation.slides)
 
+    def is_valid_number(word):
+        """Check if a word is a number or contains valid numeric patterns."""
+        return re.match(r"^\d+\+?$", word)  # Matches numbers like 14, 100, 14+
+
     for slide_index, slide in enumerate(presentation.slides, start=1):
         for shape in slide.shapes:
             if shape.has_text_frame:
@@ -81,7 +85,8 @@ def validate_spelling(input_ppt, progress_callback):
                         words = run.text.split()
                         for word in words:
                             clean_word = word.strip(string.punctuation)
-                            if is_exempted(clean_word):
+                            # Skip exempted terms and valid numeric patterns
+                            if is_exempted(clean_word) or is_valid_number(clean_word):
                                 continue
                             if clean_word.lower() not in spell:
                                 correction = spell.correction(clean_word)
