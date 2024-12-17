@@ -475,7 +475,7 @@ grammar_tool = initialize_language_tool()
 def highlight_ppt(input_ppt, output_ppt, issues):
     presentation = Presentation(input_ppt)
     for issue in issues:
-        slide_index = issue['slide'] - 1
+        slide_index = issue['slide'] - 1  # Slide index starts at 0
         slide = presentation.slides[slide_index]
         for shape in slide.shapes:
             if shape.has_text_frame:
@@ -538,37 +538,6 @@ def validate_spelling(input_ppt, progress_callback):
         progress_callback(slide_index, total_slides, "Spelling Validation")
     return spelling_issues
 
-def validate_punctuation(input_ppt, progress_callback):
-    presentation = Presentation(input_ppt)
-    punctuation_issues = []
-    total_slides = len(presentation.slides)
-    excessive_punctuation_pattern = r"([!?.:,;]{2,})"
-    repeated_word_pattern = r"\b(\w+)\s+\1\b"
-
-    for slide_index, slide in enumerate(presentation.slides, start=1):
-        for shape in slide.shapes:
-            if shape.has_text_frame:
-                for paragraph in shape.text_frame.paragraphs:
-                    for run in paragraph.runs:
-                        text = run.text.strip()
-                        if text:
-                            if re.search(excessive_punctuation_pattern, text):
-                                punctuation_issues.append({
-                                    'slide': slide_index,
-                                    'issue': 'Punctuation Marks',
-                                    'text': text,
-                                    'corrected': "Excessive punctuation marks detected"
-                                })
-                            if re.search(repeated_word_pattern, text, flags=re.IGNORECASE):
-                                punctuation_issues.append({
-                                    'slide': slide_index,
-                                    'issue': 'Punctuation Marks',
-                                    'text': text,
-                                    'corrected': "Repeated words detected"
-                                })
-        progress_callback(slide_index, total_slides, "Punctuation Validation")
-    return punctuation_issues
-
 def validate_fonts(input_ppt, default_font, progress_callback):
     presentation = Presentation(input_ppt)
     font_issues = []
@@ -588,6 +557,37 @@ def validate_fonts(input_ppt, default_font, progress_callback):
                             })
         progress_callback(slide_index, total_slides, "Font Validation")
     return font_issues
+
+def validate_punctuation(input_ppt, progress_callback):
+    presentation = Presentation(input_ppt)
+    punctuation_issues = []
+    total_slides = len(presentation.slides)
+
+    excessive_punctuation_pattern = r"([!?.:,;]{2,})"
+    repeated_word_pattern = r"\b(\w+)\s+\1\b"
+
+    for slide_index, slide in enumerate(presentation.slides, start=1):
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                for paragraph in shape.text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        text = run.text.strip()
+                        if re.search(excessive_punctuation_pattern, text):
+                            punctuation_issues.append({
+                                'slide': slide_index,
+                                'issue': 'Punctuation Error',
+                                'text': text,
+                                'corrected': "Excessive punctuation marks detected"
+                            })
+                        if re.search(repeated_word_pattern, text, flags=re.IGNORECASE):
+                            punctuation_issues.append({
+                                'slide': slide_index,
+                                'issue': 'Punctuation Error',
+                                'text': text,
+                                'corrected': "Repeated words detected"
+                            })
+        progress_callback(slide_index, total_slides, "Punctuation Validation")
+    return punctuation_issues
 
 # Save issues to CSV
 def save_to_csv(issues, output_csv):
@@ -633,6 +633,7 @@ def main():
                 f.write(uploaded_file.getbuffer())
 
             csv_output_path = Path(tmpdir) / "validation_report.csv"
+            highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
             progress_bar = st.progress(0)
             progress_text = st.empty()
 
@@ -648,10 +649,14 @@ def main():
 
             combined_issues = grammar_issues + spelling_issues + punctuation_issues + font_issues
             save_to_csv(combined_issues, csv_output_path)
+            highlight_ppt(temp_ppt_path, highlighted_ppt_path, combined_issues)
 
             st.success("Validation completed!")
             st.download_button("Download Validation Report (CSV)", csv_output_path.read_bytes(),
                                file_name="validation_report.csv")
+            st.download_button("Download Highlighted PPT", highlighted_ppt_path.read_bytes(),
+                               file_name="highlighted_presentation.pptx")
 
 if __name__ == "__main__":
     main()
+
