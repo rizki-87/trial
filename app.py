@@ -485,7 +485,7 @@ def highlight_ppt(input_ppt, output_ppt, issues):
                             run.font.color.rgb = RGBColor(255, 255, 0)  # Highlight text in yellow
     presentation.save(output_ppt)
 
-# Function to validate grammar issues
+# Validation functions
 def validate_grammar(input_ppt, progress_callback):
     presentation = Presentation(input_ppt)
     grammar_issues = []
@@ -511,7 +511,6 @@ def validate_grammar(input_ppt, progress_callback):
         progress_callback(slide_index, total_slides, "Grammar Validation")
     return grammar_issues
 
-# Function to validate spelling
 def validate_spelling(input_ppt, progress_callback):
     presentation = Presentation(input_ppt)
     spelling_issues = []
@@ -539,7 +538,6 @@ def validate_spelling(input_ppt, progress_callback):
         progress_callback(slide_index, total_slides, "Spelling Validation")
     return spelling_issues
 
-# Function to validate punctuation
 def validate_punctuation(input_ppt, progress_callback):
     presentation = Presentation(input_ppt)
     punctuation_issues = []
@@ -571,7 +569,6 @@ def validate_punctuation(input_ppt, progress_callback):
         progress_callback(slide_index, total_slides, "Punctuation Validation")
     return punctuation_issues
 
-# Function to validate fonts
 def validate_fonts(input_ppt, default_font, progress_callback):
     presentation = Presentation(input_ppt)
     font_issues = []
@@ -599,8 +596,31 @@ def save_to_csv(issues, output_csv):
         writer.writeheader()
         writer.writerows(issues)
 
+# Password protection
+PREDEFINED_PASSWORD = "securepassword123"
+
+def password_protection():
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if not st.session_state.authenticated:
+        with st.form("password_form", clear_on_submit=True):
+            password_input = st.text_input("Enter Password", type="password")
+            submitted = st.form_submit_button("Submit")
+            if submitted:
+                if password_input == PREDEFINED_PASSWORD:
+                    st.session_state.authenticated = True
+                    st.success("Access Granted! Click 'Run Validation' to proceed.")
+                else:
+                    st.error("Incorrect Password")
+        return False
+    return True
+
 # Main function
 def main():
+    if not password_protection():
+        return  # Stop execution if not authenticated
+
     st.title("PPT Validator")
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
     font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
@@ -635,4 +655,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
