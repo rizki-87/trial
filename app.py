@@ -242,68 +242,92 @@ grammar_tool = initialize_language_tool()
 
 # Custom dictionary
 TECHNICAL_TERMS = {
-    "TensorFlow", "Keras", "GPT-3", "MLOps", "PyTorch", "BERT", "OpenAI", "Data Science", "ML",
-    "1+", "2+", "3+", "10+", "50+", "100+", "14+", "+1", "+2", "+10"
-}
+     "TensorFlow","Caret","ML","DALL-E","MLOps","PyTorch","MENA", "Keras", "Scikit-learn", "NumPy", "Pandas", "Matplotlib", "OpenAI",
+     "GPT-3", "Deep Learning", "Neural Network", "Data Science", "Seaborn", "Jupyter",
+     "Anaconda", "Reinforcement Learning", "Supervised Learning", "Unsupervised Learning",
+     "Natural Language Processing", "Computer Vision", "Big Data", "Data Mining",
+     "Feature Engineering", "Hyperparameter", "Gradient Descent", "Convolutional Neural Network",
+     "Recurrent Neural Network", "Support Vector Machine", "Decision Tree", "Random Forest",
+     "Ensemble Learning", "Clustering", "Dimensionality Reduction", "Principal Component Analysis",
+     "Exploratory Data Analysis", "Model Evaluation", "Cross-Validation", "Overfitting",
+     "Underfitting", "Batch Normalization", "Dropout", "Activation Function", "Loss Function",
+     "Backpropagation", "Transfer Learning", "Generative Adversarial Network", "Autoencoder",
+     "Tokenization", "Embedding", "Word2Vec", "BERT", "OpenCV", "Flask", "Django",
+     "REST API", "GraphQL", "SQL", "NoSQL", "MongoDB", "PostgreSQL", "MySQL", "Firebase",
+     "Cloud Computing", "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes", "CI/CD",
+     "DevOps", "Agile", "Scrum", "Kanban", "Git", "GitHub", "Bitbucket", "Version Control",
+     "API", "SDK", "Microservices", "Blockchain", "Cryptocurrency", "IoT", "Edge Computing",
+     "Quantum Computing", "Augmented Reality", "Virtual Reality", "3D Printing", "Cybersecurity",
+     "Penetration Testing", "Phishing", "Malware", "Ransomware", "Firewall", "VPN", "SSL",
+     "Encryption", "Decryption", "Hashing", "Digital Signature", "Data Privacy", "GDPR",
+     "1+", "2+", "3+", "4+", "5+", "6+", "7+", "8+", "9+", "10+", "11+", "12+", "13+",
+     "14+", "15+", "16+", "17+", "18+", "19+", "20+", "21+", "22+", "23+", "24+", "25+",
+     "26+", "27+", "28+", "29+", "30+", "31+", "32+", "33+", "34+", "35+", "36+", "37+",
+     "38+", "39+", "40+", "41+", "42+", "43+", "44+", "45+", "46+", "47+", "48+", "49+",
+     "50+", "51+", "52+", "53+", "54+", "55+", "56+", "57+", "58+", "59+", "60+", "61+",
+     "62+", "63+", "64+", "65+", "66+", "67+", "68+", "69+", "70+", "71+", "72+", "73+",
+     "74+", "75+", "76+", "77+", "78+", "79+", "80+", "81+", "82+", "83+", "84+", "85+",
+     "86+", "87+", "88+", "89+", "90+", "91+", "92+", "93+", "94+", "95+", "96+", "97+",
+     "98+", "99+", "100+", "+1", "+2", "+3", "+4", "+5", "+6", "+7", "+8", "+9", "+10",
+     "+11", "+12", "+13", "+14", "+15", "+16", "+17", "+18", "+19", "+20", "+21", "+22",
+     "+23", "+24", "+25", "+26", "+27", "+28", "+29", "+30", "+31", "+32", "+33", "+34",
+     "+35", "+36", "+37", "+38", "+39", "+40", "+41", "+42", "+43", "+44", "+45", "+46",
+     "+47", "+48", "+49", "+50", "+51", "+52", "+53", "+54", "+55", "+56", "+57", "+58",
+     "+59", "+60", "+61", "+62", "+63", "+64", "+65", "+66", "+67", "+68", "+69", "+70",
+     "+71", "+72", "+73", "+74", "+75", "+76", "+77", "+78", "+79", "+80", "+81", "+82",
+     "+83", "+84", "+85", "+86", "+87", "+88", "+89", "+90", "+91", "+92", "+93", "+94",
+     "+95", "+96", "+97", "+98", "+99", "+100"
+ }
 NUMERIC_TERMS = {f"{i}+" for i in range(1, 101)}
+
+# Initialize SpellChecker
 spell = SpellChecker()
 spell.word_frequency.load_words(TECHNICAL_TERMS.union(NUMERIC_TERMS))
 
-# Exemption function for technical terms or numbers
+# Skip validation for technical terms and numeric patterns
 def is_exempted(word):
-    return word in TECHNICAL_TERMS or re.match(r"^\d+\+?$", word)
+    return word in TECHNICAL_TERMS or re.match(r"^\d+\+$", word)
 
-# Per-slide Spelling Validation
-def validate_spelling_slide(slide, slide_index):
+# Spelling Validation
+def validate_spelling(input_ppt, progress_callback):
+    presentation = Presentation(input_ppt)
     spelling_issues = []
-    for shape in slide.shapes:
-        if shape.has_text_frame:
-            for paragraph in shape.text_frame.paragraphs:
-                for run in paragraph.runs:
-                    words = re.findall(r"\b[\w+]+\b", run.text)
-                    for word in words:
-                        clean_word = word.strip(string.punctuation)
-                        if is_exempted(clean_word):
-                            continue
-                        if clean_word.lower() not in spell:
-                            correction = spell.correction(clean_word)
-                            if correction and correction != clean_word:
-                                spelling_issues.append({
-                                    'slide': slide_index,
-                                    'issue': 'Misspelling',
-                                    'text': word,
-                                    'corrected': correction
-                                })
-    return spelling_issues
+    total_slides = len(presentation.slides)
 
-# Per-slide Font Validation
-def validate_fonts_slide(slide, slide_index, default_font):
-    font_issues = []
-    for shape in slide.shapes:
-        if shape.has_text_frame:
-            for paragraph in shape.text_frame.paragraphs:
-                for run in paragraph.runs:
-                    if run.text.strip() and run.font.name != default_font:
-                        font_issues.append({
-                            'slide': slide_index,
-                            'issue': 'Inconsistent Font',
-                            'text': run.text,
-                            'corrected': f"Expected: {default_font}, Found: {run.font.name}"
-                        })
-    return font_issues
+    for slide_index, slide in enumerate(presentation.slides, start=1):
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                for paragraph in shape.text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        words = run.text.split()
+                        for word in words:
+                            clean_word = word.strip(string.punctuation)
+                            if is_exempted(clean_word):  # Skip exempted words
+                                continue
+                            if clean_word.lower() not in spell:
+                                correction = spell.correction(clean_word)
+                                if correction and correction != clean_word:
+                                    spelling_issues.append({
+                                        'slide': slide_index,
+                                        'issue': 'Misspelling',
+                                        'text': word,
+                                        'corrected': correction
+                                    })
+        progress_callback(slide_index, total_slides, "Spelling Validation")
+    return spelling_issues
 
 # Highlight issues in PPT
 def highlight_ppt(input_ppt, output_ppt, issues):
     presentation = Presentation(input_ppt)
     for issue in issues:
-        slide_index = issue['slide'] - 1
+        slide_index = issue['slide'] - 1  # Slide index starts at 0
         slide = presentation.slides[slide_index]
         for shape in slide.shapes:
             if shape.has_text_frame:
                 for paragraph in shape.text_frame.paragraphs:
                     for run in paragraph.runs:
                         if issue['text'] in run.text:
-                            run.font.color.rgb = RGBColor(255, 255, 0)
+                            run.font.color.rgb = RGBColor(255, 255, 0)  # Highlight text in yellow
     presentation.save(output_ppt)
 
 # Save issues to CSV
@@ -338,47 +362,45 @@ def main():
     if not password_protection():
         return
 
-    st.title("PPT Validator - Per Slide")
+    st.title("PPT Validator")
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
-    font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
-    default_font = st.selectbox("Select the default font for validation", font_options)
 
-    if uploaded_file and st.button("Run Validation"):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"
-            with open(temp_ppt_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
+    if uploaded_file:
+        if "uploaded_file" not in st.session_state or st.session_state.uploaded_file != uploaded_file:
+            st.session_state.uploaded_file = uploaded_file
+            st.session_state.pop("csv_path", None)
+            st.session_state.pop("ppt_path", None)
 
-            csv_output_path = Path(tmpdir) / "validation_report.csv"
-            highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
-            presentation = Presentation(temp_ppt_path)
+        if st.button("Run Validation"):
+            with tempfile.TemporaryDirectory() as tmpdir:
+                temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"
+                with open(temp_ppt_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
 
-            progress_bar = st.progress(0)
-            progress_text = st.empty()
+                csv_output_path = Path(tmpdir) / "validation_report.csv"
+                highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
+                progress_bar = st.progress(0)
+                progress_text = st.empty()
 
-            all_issues = []
-            total_slides = len(presentation.slides)
+                def update_progress(current, total, task_name):
+                    percentage = int((current / total) * 100)
+                    progress_bar.progress(percentage / 100)
+                    progress_text.text(f"{task_name}: {percentage}%")
 
-            # Process slides one by one
-            for slide_index, slide in enumerate(presentation.slides, start=1):
-                progress_text.text(f"Processing Slide {slide_index} of {total_slides}...")
-                spelling_issues = validate_spelling_slide(slide, slide_index)
-                font_issues = validate_fonts_slide(slide, slide_index, default_font)
-                all_issues.extend(spelling_issues + font_issues)
+                # Run validations
+                spelling_issues = validate_spelling(temp_ppt_path, update_progress)
+                combined_issues = spelling_issues
 
-                # Update progress
-                progress_bar.progress(slide_index / total_slides)
+                save_to_csv(combined_issues, csv_output_path)
+                highlight_ppt(temp_ppt_path, highlighted_ppt_path, combined_issues)
 
-            # Save results and highlighted PPT
-            save_to_csv(all_issues, csv_output_path)
-            highlight_ppt(temp_ppt_path, highlighted_ppt_path, all_issues)
+                # Store files in session state
+                st.session_state["csv_path"] = csv_output_path.read_bytes()
+                st.session_state["ppt_path"] = highlighted_ppt_path.read_bytes()
 
-            # Store outputs in session state
-            st.session_state["csv_path"] = csv_output_path.read_bytes()
-            st.session_state["ppt_path"] = highlighted_ppt_path.read_bytes()
+                st.success("Validation completed!")
 
-            st.success("Validation completed!")
-
+    # Display download buttons without removing results
     if "csv_path" in st.session_state:
         st.download_button("Download Validation Report (CSV)", st.session_state["csv_path"],
                            file_name="validation_report.csv")
@@ -389,3 +411,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
