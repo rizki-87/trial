@@ -21,7 +21,7 @@ grammar_tool = initialize_language_tool()
 
 # Custom dictionary
 TECHNICAL_TERMS = {
-    "TensorFlow", "Keras", "Scikit-learn", "NumPy", "Pandas", "Matplotlib", "OpenAI",
+    "TensorFlow","Caret","ML","DALL-E","MLOps","PyTorch","MENA", "Keras", "Scikit-learn", "NumPy", "Pandas", "Matplotlib", "OpenAI",
     "GPT-3", "Deep Learning", "Neural Network", "Data Science", "Seaborn", "Jupyter",
     "Anaconda", "Reinforcement Learning", "Supervised Learning", "Unsupervised Learning",
     "Natural Language Processing", "Computer Vision", "Big Data", "Data Mining",
