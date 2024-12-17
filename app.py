@@ -21,7 +21,7 @@ def initialize_language_tool():
 grammar_tool = initialize_language_tool()
 
 # Custom dictionary
-TECHNICAL_TERMS = {"TensorFlow", "ML", "OpenAI", "GPT-3", "DALL-E", "NumPy"}  # Shortened for example
+TECHNICAL_TERMS = {"TensorFlow", "ML", "OpenAI", "GPT-3", "DALL-E", "NumPy"}
 NUMERIC_TERMS = {f"{i}+" for i in range(1, 101)}
 
 # Initialize SpellChecker
@@ -168,14 +168,23 @@ def main():
                 save_to_csv(issues, csv_output_path)
                 highlight_ppt(temp_ppt_path, highlighted_ppt_path, issues)
 
-                st.download_button("Download Validation Report (CSV)", csv_output_path.read_bytes(),
-                                   file_name="validation_report.csv")
-                st.download_button("Download Highlighted PPT", highlighted_ppt_path.read_bytes(),
-                                   file_name="highlighted_presentation.pptx")
+                # Store results in session state
+                st.session_state['csv_output'] = csv_output_path.read_bytes()
+                st.session_state['ppt_output'] = highlighted_ppt_path.read_bytes()
+
                 st.success("Validation completed!")
+
+            # Display Download Buttons
+            if 'csv_output' in st.session_state:
+                st.download_button("Download Validation Report (CSV)", st.session_state['csv_output'],
+                                   file_name="validation_report.csv")
+            if 'ppt_output' in st.session_state:
+                st.download_button("Download Highlighted PPT", st.session_state['ppt_output'],
+                                   file_name="highlighted_presentation.pptx")
 
 if __name__ == "__main__":
     main()
+
 
 
 
