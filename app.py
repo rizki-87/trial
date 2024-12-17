@@ -98,12 +98,34 @@ def save_to_csv(issues, output_csv):
         writer.writeheader()
         writer.writerows(issues)
 
+# Password Protection
+PREDEFINED_PASSWORD = "securepassword123"
+
+def password_protection():
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+    if not st.session_state.authenticated:
+        with st.form("password_form", clear_on_submit=True):
+            password_input = st.text_input("Enter Password", type="password")
+            submitted = st.form_submit_button("Submit")
+            if submitted and password_input == PREDEFINED_PASSWORD:
+                st.session_state.authenticated = True
+                st.success("Access Granted! Please click 'Submit' again to proceed.")
+            elif submitted:
+                st.error("Incorrect Password")
+        return False
+    return True
+
 # Main Function
 def main():
+    if not password_protection():
+        return
+
     st.title("PPT Validator - Parallel Processing")
     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
     font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
     default_font = st.selectbox("Select the default font for validation", font_options)
+    validation_option = st.radio("Validation Option:", ["All Slides", "Custom Range"])
 
     if uploaded_file:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -113,8 +135,12 @@ def main():
 
             presentation = Presentation(temp_ppt_path)
             total_slides = len(presentation.slides)
-            start_slide = st.number_input("From Slide", 1, total_slides, 1)
-            end_slide = st.number_input("To Slide", start_slide, total_slides, total_slides)
+
+            # Slide Range Selection
+            start_slide, end_slide = 1, total_slides
+            if validation_option == "Custom Range":
+                start_slide = st.number_input("From Slide", min_value=1, max_value=total_slides, value=1)
+                end_slide = st.number_input("To Slide", min_value=start_slide, max_value=total_slides, value=100)
 
             if st.button("Run Validation"):
                 progress_bar = st.progress(0)
@@ -150,6 +176,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 ##########################################################################################
