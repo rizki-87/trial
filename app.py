@@ -149,7 +149,7 @@ def validate_decimal_consistency(slide, slide_index):
         })
     return issues
 
-# Highlight PPT
+# Highlight issues in PPT
 def highlight_ppt(input_ppt, output_ppt, issues):
     presentation = Presentation(input_ppt)
     for issue in issues:
@@ -166,7 +166,7 @@ def highlight_ppt(input_ppt, output_ppt, issues):
 # Save results to CSV
 def save_to_csv(issues, output_csv):
     with open(output_csv, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=['slide', 'issue', 'text', 'details'])
+        writer = csv.DictWriter(file, fieldnames=['slide', 'issue', 'text', 'corrected', 'details'])
         writer.writeheader()
         writer.writerows(issues)
 
