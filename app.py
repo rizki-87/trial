@@ -9,6 +9,7 @@ import csv
 import re
 import string
 from pptx.dml.color import RGBColor
+import logging
 
 # Initialize LanguageTool
 def initialize_language_tool():
@@ -110,23 +111,28 @@ def validate_grammar_slide(slide, slide_index):
 # Decimal Consistency Validation
 def validate_decimal_consistency(slide, slide_index):
     issues = []
-    decimal_pattern = re.compile(r'\d+\.\d+')  # Pattern to match decimal numbers
+    decimal_pattern = re.compile(r'\d+[\.,]\d+')  # Pattern to match decimal numbers with either '.' or ','
     decimal_places_set = set()
+
     for shape in slide.shapes:
         if shape.has_text_frame:
             for paragraph in shape.text_frame.paragraphs:
                 for run in paragraph.runs:
                     matches = decimal_pattern.findall(run.text)
                     for match in matches:
-                        decimal_places = len(match.split('.')[1])
+                        logging.debug(f"Found decimal: {match}")  # Debugging line
+                        decimal_places = len(match.split(',')[1] if ',' in match else match.split('.')[1])
                         decimal_places_set.add(decimal_places)
+
     if len(decimal_places_set) > 1:
-        issues.append({
-            'slide': slide_index,
-            'issue': 'Inconsistent Decimal Points',
-            'text': match,
-            'details': f'Found inconsistent decimal points: {list(decimal_places_set)}'
-        })
+        for match in matches:
+            issues.append({
+                'slide': slide_index,
+                'issue': 'Inconsistent Decimal Points',
+                'text': match,
+                'details': f'Found inconsistent decimal points: {list(decimal_places_set)}'
+            })
+
     return issues
 # Highlight issues in PPT
 def highlight_ppt(input_ppt, output_ppt, issues):
@@ -182,6 +188,7 @@ def main():
             temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"
             with open(temp_ppt_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
+
             presentation = Presentation(temp_ppt_path)
             total_slides = len(presentation.slides)
 
