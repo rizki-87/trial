@@ -187,8 +187,9 @@ def password_protection():
                 st.success("Access Granted! Please click 'Submit' again to proceed.")
             elif submitted:
                 st.error("Incorrect Password")
+                st.stop()  # This will stop the script until the user authenticates
 
-    return st.session_state.authenticated
+    return True
 
 def main():
     if not password_protection():
