@@ -1,4 +1,3 @@
-# Import Libraries
 from concurrent.futures import ThreadPoolExecutor
 import streamlit as st
 import tempfile
@@ -21,7 +20,7 @@ def initialize_language_tool():
 
 grammar_tool = initialize_language_tool()
 
-# Custom Dictionary
+# Custom dictionary
 TECHNICAL_TERMS = {
     "TensorFlow", "Caret", "ML", "DALL-E", "MLOps", "PyTorch", "MENA", "Keras", 
     "Scikit-learn", "NumPy", "Pandas", "Matplotlib", "OpenAI", "GPT-3", "Deep Learning", 
