@@ -269,20 +269,20 @@ grammar_tool = initialize_language_tool()
 # Custom dictionary
 TECHNICAL_TERMS = {
     "TensorFlow", "Caret", "ML", "DALL-E", "MLOps", "PyTorch", "MENA", "Keras", "Scikit-learn", "NumPy", "Pandas",
-    "Matplotlib", "OpenAI", "GPT-3", "Deep Learning", "Neural Network", "Data Science", "Seaborn", "Jupyter", 
-    "Anaconda", "Reinforcement Learning", "Supervised Learning", "Unsupervised Learning", 
-    "Natural Language Processing", "Computer Vision", "Big Data", "Data Mining", "Feature Engineering", 
-    "Hyperparameter", "Gradient Descent", "Convolutional Neural Network", "Recurrent Neural Network", 
-    "Support Vector Machine", "Decision Tree", "Random Forest", "Ensemble Learning", "Clustering", 
-    "Dimensionality Reduction", "Principal Component Analysis", "Exploratory Data Analysis", "Model Evaluation", 
-    "Cross-Validation", "Overfitting", "Underfitting", "Batch Normalization", "Dropout", "Activation Function", 
-    "Loss Function", "Backpropagation", "Transfer Learning", "Generative Adversarial Network", "Autoencoder", 
-    "Tokenization", "Embedding", "Word2Vec", "BERT", "OpenCV", "Flask", "Django", "REST API", "GraphQL", "SQL", 
-    "NoSQL", "MongoDB", "PostgreSQL", "MySQL", "Firebase", "Cloud Computing", "AWS", "Azure", "Google Cloud", 
-    "Docker", "Kubernetes", "CI/CD", "DevOps", "Agile", "Scrum", "Kanban", "Git", "GitHub", "Bitbucket", 
-    "Version Control", "API", "SDK", "Microservices", "Blockchain", "Cryptocurrency", "IoT", "Edge Computing", 
-    "Quantum Computing", "Augmented Reality", "Virtual Reality", "3D Printing", "Cybersecurity", 
-    "Penetration Testing", "Phishing", "Malware", "Ransomware", "Firewall", "VPN", "SSL", "Encryption", 
+    "Matplotlib", "OpenAI", "GPT-3", "Deep Learning", "Neural Network", "Data Science", "Seaborn", "Jupyter",
+    "Anaconda", "Reinforcement Learning", "Supervised Learning", "Unsupervised Learning",
+    "Natural Language Processing", "Computer Vision", "Big Data", "Data Mining", "Feature Engineering",
+    "Hyperparameter", "Gradient Descent", "Convolutional Neural Network", "Recurrent Neural Network",
+    "Support Vector Machine", "Decision Tree", "Random Forest", "Ensemble Learning", "Clustering",
+    "Dimensionality Reduction", "Principal Component Analysis", "Exploratory Data Analysis", "Model Evaluation",
+    "Cross-Validation", "Overfitting", "Underfitting", "Batch Normalization", "Dropout", "Activation Function",
+    "Loss Function", "Backpropagation", "Transfer Learning", "Generative Adversarial Network", "Autoencoder",
+    "Tokenization", "Embedding", "Word2Vec", "BERT", "OpenCV", "Flask", "Django", "REST API", "GraphQL", "SQL",
+    "NoSQL", "MongoDB", "PostgreSQL", "MySQL", "Firebase", "Cloud Computing", "AWS", "Azure", "Google Cloud",
+    "Docker", "Kubernetes", "CI/CD", "DevOps", "Agile", "Scrum", "Kanban", "Git", "GitHub", "Bitbucket",
+    "Version Control", "API", "SDK", "Microservices", "Blockchain", "Cryptocurrency", "IoT", "Edge Computing",
+    "Quantum Computing", "Augmented Reality", "Virtual Reality", "3D Printing", "Cybersecurity",
+    "Penetration Testing", "Phishing", "Malware", "Ransomware", "Firewall", "VPN", "SSL", "Encryption",
     "Decryption", "Hashing", "Digital Signature", "Data Privacy", "GDPR"
 }
 
@@ -357,7 +357,7 @@ def validate_grammar_slide(slide, slide_index):
 # Decimal Consistency Validation
 def validate_decimal_consistency(slide, slide_index):
     issues = []
-    decimal_pattern = re.compile(r'\d+[\.,]\d+')  # Pattern to match decimal numbers
+    decimal_pattern = re.compile(r'\d+[\.,]\d+')
     decimal_places_set = set()
     all_matches = []
     for shape in slide.shapes:
@@ -383,47 +383,31 @@ def validate_decimal_consistency(slide, slide_index):
 def validate_million_notations(slide, slide_index):
     issues = []
     million_patterns = {
-        r'\b\d+M\b': 'M',
-        r'\b\d+\s?Million\b': 'Million',
-        r'\b\d+mn\b': 'mn',
-        r'\b\d+\sm\b': 'm',
-        r'\b\d+MM\b': 'MM',
-        r'\b\d+\s?Millions\b': 'Millions'
-    }  # Patterns to match million notations
+        r'\b\d+M\b': 'M', r'\b\d+\s?Million\b': 'Million', r'\b\d+mn\b': 'mn', r'\b\d+\sm\b': 'm',
+        r'\b\d+MM\b': 'MM', r'\b\d+\s?Millions\b': 'Millions', r'\b\d+\s?Juta\b': 'Juta'
+    }
     notation_set = set()
     all_matches = []
-
     logging.debug(f"Slide {slide_index}: Checking shapes for million notations")
     for shape in slide.shapes:
         if not shape.has_text_frame:
-            logging.debug(f"Slide {slide_index}: Shape without text frame skipped")
             continue
-        
-        logging.debug(f"Slide {slide_index}: Text frame detected")
         for paragraph in shape.text_frame.paragraphs:
             for run in paragraph.runs:
                 for pattern, notation in million_patterns.items():
                     matches = re.findall(pattern, run.text, re.IGNORECASE)
-                    logging.debug(f"Slide {slide_index}: Found matches with pattern {pattern} - {matches}")
                     all_matches.extend(matches)
                     for match in matches:
-                        logging.debug(f"Slide {slide_index}: Processing match - {match}")
                         notation_set.add(notation)
-
-    logging.debug(f"Slide {slide_index}: Notation set - {notation_set}")
     if len(notation_set) > 1:
         for match in all_matches:
-            logging.debug(f"Slide {slide_index}: Inconsistent million notation detected - {match}")
             issues.append({
                 'slide': slide_index,
                 'issue': 'Inconsistent Million Notations',
                 'text': match,
                 'details': f'Found inconsistent million notations: [using {", ".join(notation_set)}]'
             })
-    logging.debug(f"Issues found in slide {slide_index}: {issues}")  # Added logging
     return issues
-
-
 # Highlight issues in PPT
 def highlight_ppt(input_ppt, output_ppt, issues):
     presentation = Presentation(input_ppt)
@@ -441,9 +425,10 @@ def highlight_ppt(input_ppt, output_ppt, issues):
 # Save results to CSV
 def save_to_csv(issues, output_csv):
     with open(output_csv, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=['slide', 'issue', 'text', 'corrected'])
+        writer = csv.DictWriter(file, fieldnames=['slide', 'issue', 'text', 'corrected', 'details'])
         writer.writeheader()
         writer.writerows(issues)
+
 # Password Protection
 PREDEFINED_PASSWORD = "securepassword123"
 
@@ -531,4 +516,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
