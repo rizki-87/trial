@@ -383,30 +383,46 @@ def validate_decimal_consistency(slide, slide_index):
 def validate_million_notations(slide, slide_index):
     issues = []
     million_patterns = {
-        r'\b\d+M\b': 'M', r'\b\d+\s?Million\b': 'Million', r'\b\d+mn\b': 'mn', r'\b\d+\sm\b': 'm', 
-        r'\b\d+MM\b': 'MM', r'\b\d+\s?Millions\b': 'Millions'
-    }
+        r'\b\d+M\b': 'M',
+        r'\b\d+\s?Million\b': 'Million',
+        r'\b\d+mn\b': 'mn',
+        r'\b\d+\sm\b': 'm',
+        r'\b\d+MM\b': 'MM',
+        r'\b\d+\s?Millions\b': 'Millions'
+    }  # Patterns to match million notations
     notation_set = set()
     all_matches = []
+
+    logging.debug(f"Slide {slide_index}: Checking shapes for million notations")
     for shape in slide.shapes:
         if not shape.has_text_frame:
+            logging.debug(f"Slide {slide_index}: Shape without text frame skipped")
             continue
+        
+        logging.debug(f"Slide {slide_index}: Text frame detected")
         for paragraph in shape.text_frame.paragraphs:
             for run in paragraph.runs:
                 for pattern, notation in million_patterns.items():
                     matches = re.findall(pattern, run.text, re.IGNORECASE)
+                    logging.debug(f"Slide {slide_index}: Found matches with pattern {pattern} - {matches}")
                     all_matches.extend(matches)
                     for match in matches:
+                        logging.debug(f"Slide {slide_index}: Processing match - {match}")
                         notation_set.add(notation)
+
+    logging.debug(f"Slide {slide_index}: Notation set - {notation_set}")
     if len(notation_set) > 1:
         for match in all_matches:
+            logging.debug(f"Slide {slide_index}: Inconsistent million notation detected - {match}")
             issues.append({
                 'slide': slide_index,
                 'issue': 'Inconsistent Million Notations',
                 'text': match,
                 'details': f'Found inconsistent million notations: [using {", ".join(notation_set)}]'
             })
+    logging.debug(f"Issues found in slide {slide_index}: {issues}")  # Added logging
     return issues
+
 
 # Highlight issues in PPT
 def highlight_ppt(input_ppt, output_ppt, issues):
@@ -486,10 +502,12 @@ def main():
                         futures.append(executor.submit(validate_fonts_slide, slide, slide_index + 1, default_font))
                         futures.append(executor.submit(validate_grammar_slide, slide, slide_index + 1))
                         futures.append(executor.submit(validate_decimal_consistency, slide, slide_index + 1))
-                        futures.append(executor.submit(validate_million_notations, slide, slide_index + 1))
+                        futures.append(executor.submit(validate_million_notations, slide, slide_index + 1))  # Added function call
 
                     for i, future in enumerate(futures):
-                        issues.extend(future.result())
+                        result = future.result()
+                        logging.debug(f"Validation result for future {i}: {result}")  # Added logging
+                        issues.extend(result)
                         progress_percent = int((i + 1) / len(futures) * 100)
                         progress_text.text(f"Progress: {progress_percent}%")
                         progress_bar.progress(progress_percent / 100)
@@ -513,3 +531,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
