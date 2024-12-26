@@ -38,7 +38,8 @@ TECHNICAL_TERMS = {
     "Docker", "Kubernetes", "CI/CD", "DevOps", "Agile", "Scrum", "Kanban", "Git", "GitHub", "Bitbucket",
     "Version Control", "API", "SDK", "Microservices", "Blockchain", "Cryptocurrency", "IoT", "Edge Computing",
     "Quantum Computing", "Augmented Reality", "Virtual Reality", "3D Printing", "Cybersecurity",
-    "Penetration Testing", "Phishing", "Malware", "Ransomware", "Firewall", "VPN", "SSL", "Encryption",
+    "Penetration Testing", "Phishing", "Malware", "Ransomware", "Firewall","DALL
+    ", "VPN", "SSL", "Encryption",
     "Decryption", "Hashing", "Digital Signature", "Data Privacy", "GDPR"
 }
 
