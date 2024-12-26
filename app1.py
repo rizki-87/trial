@@ -38,9 +38,8 @@ TECHNICAL_TERMS = {
     "Docker", "Kubernetes", "CI/CD", "DevOps", "Agile", "Scrum", "Kanban", "Git", "GitHub", "Bitbucket",
     "Version Control", "API", "SDK", "Microservices", "Blockchain", "Cryptocurrency", "IoT", "Edge Computing",
     "Quantum Computing", "Augmented Reality", "Virtual Reality", "3D Printing", "Cybersecurity",
-    "Penetration Testing", "Phishing", "Malware", "Ransomware", "Firewall","DALL
-    ", "VPN", "SSL", "Encryption",
-    "Decryption", "Hashing", "Digital Signature", "Data Privacy", "GDPR"
+    "Penetration Testing", "Phishing", "Malware", "Ransomware", "Firewall", "VPN", "SSL", "Encryption",
+    "Decryption", "Hashing", "Digital Signature", "Data Privacy", "GDPR","DALL"
 }
 
 NUMERIC_TERMS = {f"{i}+" for i in range(1, 101)}
@@ -112,33 +111,24 @@ def validate_grammar_slide(slide, slide_index):
     return issues
 
 # Decimal Consistency Validation
-class DecimalConsistencyError(BaseModel):
-    slide: int
-    text: str
-    details: str
-
 def validate_decimal_consistency(slide, slide_index):
     issues = []
-    decimal_pattern = re.compile(r'\d+[\.,]\d+')
-    decimal_places_set = set()
-    all_matches = []
+    decimal_points = set()
     for shape in slide.shapes:
         if shape.has_text_frame:
             for paragraph in shape.text_frame.paragraphs:
                 for run in paragraph.runs:
-                    matches = decimal_pattern.findall(run.text)
-                    all_matches.extend(matches)
-                    for match in matches:
-                        decimal_places = len(match.split(',')[1] if ',' in match else match.split('.')[1])
-                        decimal_places_set.add(decimal_places)
-    if len(decimal_places_set) > 1:
-        for match in all_matches:
-            error = DecimalConsistencyError(
-                slide=slide_index,
-                text=match,
-                details=f'Found inconsistent decimal points: {list(decimal_places_set)}'
-            )
-            issues.append(error)
+                    text = run.text
+                    if ',' in text or '.' in text:
+                        decimal_point = text.split(',')[-1] if ',' in text else text.split('.')[-1]
+                        decimal_points.add(len(decimal_point))
+    if len(decimal_points) > 1:
+        issues.append({
+            'slide': slide_index,
+            'issue': 'Inconsistent Decimal Points',
+            'text': '',
+            'details': f'Found inconsistent decimal points: {list(decimal_points)}'
+        })
     return issues
 
 # Million Notation Validation
