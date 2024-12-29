@@ -3,6 +3,7 @@
 import re
 import string
 from spellchecker import SpellChecker
+from config import TECHNICAL_TERMS  # Tambahkan impor ini
 
 def is_exempted(word, TECHNICAL_TERMS):
     return word in TECHNICAL_TERMS or re.match(r"^\d+\+?$", word)
@@ -28,3 +29,4 @@ def validate_spelling_slide(slide, slide_index, spell):
                                     'corrected': correction
                                 })
     return issues
+
