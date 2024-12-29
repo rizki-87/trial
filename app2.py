@@ -31,6 +31,9 @@ spell.word_frequency.load_words(TECHNICAL_TERMS.union(NUMERIC_TERMS))
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Global variable for reference_decimal_points
+reference_decimal_points = None
+
 # Password Protection
 def password_protection():
     if "authenticated" not in st.session_state:
@@ -48,6 +51,7 @@ def password_protection():
     return True
 
 def main():
+    global reference_decimal_points
     if not password_protection():
         return
 
