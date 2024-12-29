@@ -37,11 +37,17 @@ def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
     # Jika reference_decimal_points sudah ada, periksa konsistensi dengan referensi
     if reference_decimal_points is not None:
         if decimal_points != reference_decimal_points:
-            issues.append({
-                'slide': slide_index,
-                'issue': 'Inconsistent Decimal Points',
-                'text': '',
-                'details': f'Angka desimal di slide {slide_index} tidak konsisten, harus mengikuti format yang ada di slide {reference_decimal_points.pop()} (awal ditemukan angka desimal)'
-            })
+            # Pastikan reference_decimal_points tidak kosong sebelum melakukan pop()
+            if reference_decimal_points:
+                ref_point = reference_decimal_points.pop()
+                reference_decimal_points.add(ref_point)  # Kembalikan ke set
+                issues.append({
+                    'slide': slide_index,
+                    'issue': 'Inconsistent Decimal Points',
+                    'text': '',
+                    'details': f'Decimal points on slide {slide_index} are inconsistent. Expected {ref_point} decimal places, found {list(decimal_points)}.'
+                })
+            else:
+                logging.error(f"reference_decimal_points is empty on slide {slide_index}")
     
     return issues, reference_decimal_points
