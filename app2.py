@@ -28,6 +28,9 @@ grammar_tool = initialize_language_tool()
 spell = SpellChecker()
 spell.word_frequency.load_words(TECHNICAL_TERMS.union(NUMERIC_TERMS))
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
 # Password Protection
 def password_protection():
     if "authenticated" not in st.session_state:
