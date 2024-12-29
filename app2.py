@@ -12,7 +12,7 @@ import string
 from pptx.dml.color import RGBColor
 import logging
 from pydantic import BaseModel
-from concurrent.futures import ThreadPoolExecutor  # Tambahkan impor ini
+from concurrent.futures import ThreadPoolExecutor
 from utils.validation import highlight_ppt, save_to_csv
 from utils.font_validation import validate_fonts_slide
 from utils.grammar_validation import initialize_language_tool, validate_grammar_slide
