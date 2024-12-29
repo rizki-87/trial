@@ -12,7 +12,6 @@ import string
 from pptx.dml.color import RGBColor
 import logging
 from pydantic import BaseModel
-from concurrent.futures import ThreadPoolExecutor
 from utils.validation import highlight_ppt, save_to_csv
 from utils.font_validation import validate_fonts_slide
 from utils.grammar_validation import initialize_language_tool, validate_grammar_slide
@@ -31,9 +30,6 @@ spell.word_frequency.load_words(TECHNICAL_TERMS.union(NUMERIC_TERMS))
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Global variable for reference_decimal_points
-reference_decimal_points = None
-
 # Password Protection
 def password_protection():
     if "authenticated" not in st.session_state:
@@ -51,7 +47,6 @@ def password_protection():
     return True
 
 def main():
-    global reference_decimal_points
     if not password_protection():
         return
 
@@ -83,27 +78,27 @@ def main():
                 issues = []
                 reference_decimal_points = None
 
-                # Parallel Processing
-                with ThreadPoolExecutor() as executor:
-                    futures = []
-                    for slide_index in range(start_slide - 1, end_slide):
-                        slide = presentation.slides[slide_index]
-                        futures.append(executor.submit(validate_spelling_slide, slide, slide_index + 1, spell))
-                        futures.append(executor.submit(validate_fonts_slide, slide, slide_index + 1, default_font))
-                        futures.append(executor.submit(validate_grammar_slide, slide, slide_index + 1, grammar_tool))
-                        futures.append(executor.submit(validate_decimal_consistency, slide, slide_index + 1, reference_decimal_points))
-                        futures.append(executor.submit(validate_million_notations, slide, slide_index + 1))  # Added function call
+                # Sequential Processing
+                for slide_index in range(start_slide - 1, end_slide):
+                    slide = presentation.slides[slide_index]
+                    slide_issues = []
 
-                    for i, future in enumerate(futures):
-                        result = future.result()
-                        if isinstance(result, tuple):
-                            slide_issues, reference_decimal_points = result
-                            issues.extend(slide_issues)
-                        else:
-                            issues.extend(result)
-                        progress_percent = int((i + 1) / len(futures) * 100)
-                        progress_text.text(f"Progress: {progress_percent}%")
-                        progress_bar.progress(progress_percent / 100)
+                    # Validate Spelling
+                    slide_issues.extend(validate_spelling_slide(slide, slide_index + 1, spell))
+                    # Validate Fonts
+                    slide_issues.extend(validate_fonts_slide(slide, slide_index + 1, default_font))
+                    # Validate Grammar
+                    slide_issues.extend(validate_grammar_slide(slide, slide_index + 1, grammar_tool))
+                    # Validate Decimal Consistency
+                    decimal_issues, reference_decimal_points = validate_decimal_consistency(slide, slide_index + 1, reference_decimal_points)
+                    slide_issues.extend(decimal_issues)
+                    # Validate Million Notations
+                    slide_issues.extend(validate_million_notations(slide, slide_index + 1))
+
+                    issues.extend(slide_issues)
+                    progress_percent = int((slide_index - start_slide + 2) / (end_slide - start_slide + 1) * 100)
+                    progress_text.text(f"Progress: {progress_percent}%")
+                    progress_bar.progress(progress_percent / 100)
 
                 # Save Results
                 csv_output_path = Path(tmpdir) / "validation_report.csv"
