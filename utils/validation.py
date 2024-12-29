@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import tempfile
 from pathlib import Path
 from pptx import Presentation
+from pptx.dml.color import RGBColor  # Tambahkan impor ini
 import csv
 import logging
 
