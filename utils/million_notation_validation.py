@@ -1,6 +1,7 @@
 # utils/million_notation_validation.py
 
 import re
+import logging  # Tambahkan impor ini
 
 def validate_million_notations(slide, slide_index):
     issues = []
@@ -10,7 +11,7 @@ def validate_million_notations(slide, slide_index):
     }
     notation_set = set()
     all_matches = []
-    logging.debug(f"Slide {slide_index}: Checking shapes for million notations")
+    logging.debug(f"Slide {slide_index}: Checking shapes for million notations")  # Gunakan logging
     for shape in slide.shapes:
         if not shape.has_text_frame:
             continue
