@@ -6,6 +6,7 @@ import logging
 def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
     issues = []
     decimal_points = set()
+    
     for shape in slide.shapes:
         if shape.has_text_frame:
             for paragraph in shape.text_frame.paragraphs:
@@ -20,6 +21,10 @@ def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
                         decimal_part = match.split('.')[-1]
                         decimal_points.add(len(decimal_part))
     
+    # Jika slide tidak memiliki angka desimal, kembalikan issues dan reference_decimal_points tanpa perubahan
+    if not decimal_points:
+        return issues, reference_decimal_points
+    
     # Jika ada lebih dari satu jumlah digit setelah titik, tambahkan issue
     if len(decimal_points) > 1:
         issues.append({
@@ -30,12 +35,12 @@ def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
         })
     
     # Jika reference_decimal_points belum ada, set sebagai referensi
-    if reference_decimal_points is None and decimal_points:
+    if reference_decimal_points is None:
         reference_decimal_points = decimal_points.copy()
         logging.debug(f"Set reference_decimal_points to {reference_decimal_points} on slide {slide_index}")
     
     # Jika reference_decimal_points sudah ada, periksa konsistensi dengan referensi
-    if reference_decimal_points is not None and decimal_points:
+    else:
         if decimal_points != reference_decimal_points:
             # Pastikan reference_decimal_points tidak kosong sebelum melakukan pop()
             if reference_decimal_points:
