@@ -35,7 +35,7 @@ def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
         logging.debug(f"Set reference_decimal_points to {reference_decimal_points} on slide {slide_index}")
     
     # Jika reference_decimal_points sudah ada, periksa konsistensi dengan referensi
-    if reference_decimal_points is not None:
+    if reference_decimal_points is not None and decimal_points:
         if decimal_points != reference_decimal_points:
             # Pastikan reference_decimal_points tidak kosong sebelum melakukan pop()
             if reference_decimal_points:
