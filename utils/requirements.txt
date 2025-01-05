@@ -1,5 +1,0 @@
-streamlit
-python-pptx
-pyspellchecker
-language-tool-python
-pydantic
