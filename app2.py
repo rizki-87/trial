@@ -337,11 +337,11 @@ def validate_slide(slide, slide_index, default_font, spell, grammar_tool, refere
     slide_issues = []
 
     # Validate Spelling
-    slide_issues.extend(validate_spelling_slide(slide, slide_index + 1))
+    slide_issues.extend(validate_spelling_slide(slide, slide_index + 1, spell))
     # Validate Fonts
     slide_issues.extend(validate_fonts_slide(slide, slide_index + 1, default_font))
     # Validate Grammar
-    slide_issues.extend(validate_grammar_slide(slide, slide_index + 1))
+    slide_issues.extend(validate_grammar_slide(slide, slide_index + 1, grammar_tool))
     # Validate Decimal Consistency
     decimal_issues, reference_decimal_points = validate_decimal_consistency(slide, slide_index + 1, reference_decimal_points)
     slide_issues.extend(decimal_issues)
