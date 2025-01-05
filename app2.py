@@ -417,7 +417,7 @@ def main():
                 with open(log_output_path, "w") as log_file:
                     for handler in logging.root.handlers[:]:
                         logging.root.removeHandler(handler)
-                    logging.basicConfig(filename=log_output_path, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+                    logging.basicConfig(filename=log_output_path, level=logging.DEBUG, format='%(asctime)s - %(levellevelname)s - %(message)s')
                     logging.debug(f"Validation completed with {len(issues)} issues.")
                     for issue in issues:
                         logging.debug(f"Issue: {issue}")
@@ -428,5 +428,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
