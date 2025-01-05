@@ -29,6 +29,6 @@ def validate_decimal_consistency(slide, slide_index, decimal_places):
                                 'text': match,
                                 'details': f'Expected {decimal_places} decimal place(s), found {len(decimal_part)} in "{match}".'
                             })
-                            logging.debug(f"Slide {slide_index}: Inconsistent decimal points found in "{match}". Expected {decimal_places}, found {len(decimal_part)}.")
+                            logging.debug(f"Slide {slide_index}: Inconsistent decimal points found in \"{match}\". Expected {decimal_places}, found {len(decimal_part)}.")
     
     return issues
