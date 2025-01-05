@@ -4,7 +4,7 @@ import logging
 # Simpan pola regex dalam variabel
 decimal_pattern = re.compile(r'\b\d+[\.,]\d+\b')
 
-def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
+def validate_decimal_consistency(slide, slide_index, reference_decimal_points=None):
     issues = []
     decimal_points = set()
     
