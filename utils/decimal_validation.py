@@ -28,19 +28,18 @@ def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
     
     # Jika reference_decimal_points belum ada, set sebagai referensi
     if reference_decimal_points is None:
-        reference_decimal_points = decimal_points.copy()
+        reference_decimal_points = next(iter(decimal_points))
         logging.debug(f"Set reference_decimal_points to {reference_decimal_points} on slide {slide_index}")
     
     # Jika reference_decimal_points sudah ada, periksa konsistensi dengan referensi
     else:
-        ref_point = next(iter(reference_decimal_points))  # Ambil nilai referensi
         for decimal_point in decimal_points:
-            if decimal_point != ref_point:
+            if decimal_point != reference_decimal_points:
                 issues.append({
                     'slide': slide_index,
                     'issue': 'Inconsistent Decimal Points',
                     'text': '',
-                    'details': f'Decimal points on slide {slide_index} are inconsistent. Expected {ref_point} decimal places, found {decimal_point}.'
+                    'details': f'Decimal points on slide {slide_index} are inconsistent. Expected {reference_decimal_points} decimal places, found {decimal_point}.'
                 })
     
     return issues, reference_decimal_points
