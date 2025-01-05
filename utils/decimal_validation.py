@@ -15,12 +15,14 @@ def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
                     text = run.text
                     # Cari semua angka desimal dengan titik atau koma sebagai pemisah desimal
                     matches = decimal_pattern.findall(text)
+                    logging.debug(f"Slide {slide_index}: Found matches: {matches}")
                     for match in matches:
                         # Ganti koma dengan titik untuk konsistensi
                         match = match.replace(',', '.')
                         # Hitung jumlah digit setelah titik
                         decimal_part = match.split('.')[-1]
                         decimal_points.add(len(decimal_part))
+                        logging.debug(f"Slide {slide_index}: Match: {match}, Decimal part: {decimal_part}, Decimal points: {decimal_points}")
     
     # Jika slide tidak memiliki angka desimal, kembalikan issues dan reference_decimal_points tanpa perubahan
     if not decimal_points:
@@ -41,5 +43,6 @@ def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
                     'text': '',
                     'details': f'Decimal points on slide {slide_index} are inconsistent. Expected {reference_decimal_points} decimal places, found {decimal_point}.'
                 })
+                logging.debug(f"Slide {slide_index}: Inconsistent decimal points found. Expected {reference_decimal_points}, found {decimal_point}")
     
     return issues, reference_decimal_points
