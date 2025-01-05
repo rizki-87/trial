@@ -30,3 +30,6 @@ def validate_spelling_slide(slide, slide_index, spell):
                                 })
     return issues
 
+###############
+
+
