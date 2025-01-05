@@ -136,163 +136,62 @@
 
 ##################
 
-# app2.py
-
-import streamlit as st
-import tempfile
-from pathlib import Path
 from pptx import Presentation
-from spellchecker import SpellChecker
-import language_tool_python
+import csv
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from utils.validation import highlight_ppt, save_to_csv
+from utils.decimal_validation import validate_decimal_consistency
 from utils.font_validation import validate_fonts_slide
 from utils.grammar_validation import initialize_language_tool, validate_grammar_slide
-from utils.spelling_validation import validate_spelling_slide
-from utils.decimal_validation import validate_decimal_consistency
 from utils.million_notation_validation import validate_million_notations
-from config import PREDEFINED_PASSWORD, TECHNICAL_TERMS, NUMERIC_TERMS
+from utils.spelling_validation import SpellChecker, TECHNICAL_TERMS, validate_spelling_slide
+from utils.validation_ import save_to_csv
 
-# Initialize LanguageTool
+# Konfigurasi logging
+logging.basicConfig(level=logging.DEBUG)
+
+# Inisialisasi LanguageTool
 grammar_tool = initialize_language_tool()
 
-# Initialize SpellChecker
+# Inisialisasi SpellChecker
 spell = SpellChecker()
-spell.word_frequency.load_words(TECHNICAL_TERMS.union(NUMERIC_TERMS))
+TECHNICAL_TERMS = set(["example", "technical", "terms"])  # Contoh set technical terms
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+# Baca file PPT
+input_ppt = "Generated_50_Slide_Presentation.pptx"
+presentation = Presentation(input_ppt)
 
-def validate_slide(slide, slide_index, reference_decimal_points):
-    slide_issues = []
-    logging.debug(f"Validating slide {slide_index + 1}")
+# Inisialisasi variabel
+issues = []
+reference_decimal_points = None
+default_font = "Arial"
 
-    # Validasi ejaan
-    spelling_issues = validate_spelling_slide(slide, slide_index + 1, spell)
-    logging.debug(f"Spelling issues for slide {slide_index + 1}: {spelling_issues}")
-    slide_issues.extend(spelling_issues)
+# Validasi setiap slide
+for slide_index, slide in enumerate(presentation.slides, start=1):
+    logging.debug(f"Validating slide {slide_index}")
+    
+    # Decimal Validation
+    issues, reference_decimal_points = validate_decimal_consistency(slide, slide_index, reference_decimal_points)
+    logging.debug(f"Decimal Validation Issues: {issues}")
+    
+    # Font Validation
+    issues.extend(validate_fonts_slide(slide, slide_index, default_font))
+    logging.debug(f"Font Validation Issues: {issues}")
+    
+    # Grammar Validation
+    issues.extend(validate_grammar_slide(slide, slide_index, grammar_tool))
+    logging.debug(f"Grammar Validation Issues: {issues}")
+    
+    # Million Notation Validation
+    issues.extend(validate_million_notations(slide, slide_index))
+    logging.debug(f"Million Notation Validation Issues: {issues}")
+    
+    # Spelling Validation
+    issues.extend(validate_spelling_slide(slide, slide_index, spell))
+    logging.debug(f"Spelling Validation Issues: {issues}")
 
-    # Validasi font
-    font_issues = validate_fonts_slide(slide, slide_index + 1, default_font)
-    logging.debug(f"Font issues for slide {slide_index + 1}: {font_issues}")
-    slide_issues.extend(font_issues)
+# Simpan hasil validasi ke file CSV
+output_csv = "validation_report (2).csv"
+save_to_csv(issues, output_csv)
+logging.debug(f"Validation complete. Issues saved to {output_csv}")
 
-    # Validasi tata bahasa
-    grammar_issues = validate_grammar_slide(slide, slide_index + 1, grammar_tool)
-    logging.debug(f"Grammar issues for slide {slide_index + 1}: {grammar_issues}")
-    slide_issues.extend(grammar_issues)
-
-    # Validasi desimal
-    decimal_issues, reference_decimal_points = validate_decimal_consistency(slide, slide_index + 1, reference_decimal_points)
-    logging.debug(f"Decimal issues for slide {slide_index + 1}: {decimal_issues}")
-    slide_issues.extend(decimal_issues)
-
-    # Validasi notasi juta
-    million_issues = validate_million_notations(slide, slide_index + 1)
-    logging.debug(f"Million notation issues for slide {slide_index + 1}: {million_issues}")
-    slide_issues.extend(million_issues)
-
-    logging.debug(f"Slide {slide_index + 1} issues: {slide_issues}")
-    return slide_issues, reference_decimal_points
-
-def password_protection():
-    if "authenticated" not in st.session_state:
-        st.session_state.authenticated = False
-    if not st.session_state.authenticated:
-        with st.form("password_form", clear_on_submit=True):
-            password_input = st.text_input("Enter Password", type="password")
-            submitted = st.form_submit_button("Submit")
-            if submitted and password_input == PREDEFINED_PASSWORD:
-                st.session_state.authenticated = True
-                st.success("Access Granted! Please click 'Submit' again to proceed.")
-            elif submitted:
-                st.error("Incorrect Password")
-        return False
-    return True
-
-def main():
-    if not password_protection():
-        return
-
-    st.title("PPT Validator")
-    uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])
-    font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
-    default_font = st.selectbox("Select the default font for validation", font_options)
-    validation_option = st.radio("Validation Option:", ["All Slides", "Custom Range"])
-
-    if uploaded_file:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"
-            with open(temp_ppt_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-
-            presentation = Presentation(temp_ppt_path)
-            total_slides = len(presentation.slides)
-
-            # Slide Range Selection
-            start_slide, end_slide = 1, total_slides
-            if validation_option == "Custom Range":
-                start_slide = st.number_input("From Slide", min_value=1, max_value=total_slides, value=1)
-                end_slide_default = min(total_slides, 100)  # Ensure default value does not exceed total slides
-                end_slide = st.number_input("To Slide", min_value=start_slide, max_value=total_slides, value=end_slide_default)
-
-            if st.button("Run Validation"):
-                progress_bar = st.progress(0)
-                progress_text = st.empty()
-                issues = []
-                reference_decimal_points = None
-
-                # Paralel Processing
-                with ThreadPoolExecutor() as executor:
-                    futures = {executor.submit(validate_slide, presentation.slides[i], i, reference_decimal_points): i for i in range(start_slide - 1, end_slide)}
-                    for future in as_completed(futures):
-                        slide_index = futures[future]
-                        try:
-                            slide_issues, reference_decimal_points = future.result()
-                            issues.extend(slide_issues)
-                        except Exception as e:
-                            logging.error(f"Error processing slide {slide_index}: {e}")
-
-                        # Update progress bar
-                        progress_percent = int((slide_index - start_slide + 2) / (end_slide - start_slide + 1) * 100)
-                        progress_text.text(f"Progress: {progress_percent}%")
-                        progress_bar.progress(progress_percent / 100)
-
-                # Save Results
-                csv_output_path = Path(tmpdir) / "validation_report.csv"
-                highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
-                save_to_csv(issues, csv_output_path)
-                highlight_ppt(temp_ppt_path, highlighted_ppt_path, issues)
-
-                # Store results in session state
-                st.session_state['csv_output'] = csv_output_path.read_bytes()
-                st.session_state['ppt_output'] = highlighted_ppt_path.read_bytes()
-                st.success("Validation completed!")
-
-                # Display Download Buttons
-                if 'csv_output' in st.session_state:
-                    st.download_button("Download Validation Report (CSV)", st.session_state['csv_output'], file_name="validation_report.csv")
-                if 'ppt_output' in st.session_state:
-                    st.download_button("Download Highlighted PPT", st.session_state['ppt_output'], file_name="highlighted_presentation.pptx")
-
-                # Display Logs
-                log_output_path = Path(tmpdir) / "validation_log.txt"
-                with open(log_output_path, "w") as log_file:
-                    for handler in logging.root.handlers[:]:
-                        logging.root.removeHandler(handler)
-                    logging.basicConfig(filename=log_output_path, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-                    logging.debug(f"Validation completed with {len(issues)} issues.")
-                    for issue in issues:
-                        logging.debug(f"Issue: {issue}")
-
-                with open(log_output_path, "r") as log_file:
-                    log_content = log_file.read()
-                    st.text_area("Validation Log", value=log_content, height=300)
-
-if __name__ == "__main__":
-    main()
-
-
-
-
+print(f"Validation complete. Issues saved to {output_csv}")
