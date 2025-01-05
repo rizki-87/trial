@@ -135,8 +135,6 @@
 # if __name__ == "__main__":
 #     main()
 
-# app2.py
-
 import streamlit as st
 import tempfile
 from pathlib import Path
