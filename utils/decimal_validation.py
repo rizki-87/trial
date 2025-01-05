@@ -1,5 +1,3 @@
-# utils/decimal_validation.py
-
 import re
 import logging
 
@@ -28,15 +26,6 @@ def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
     if not decimal_points:
         return issues, reference_decimal_points
     
-    # Jika ada lebih dari satu jumlah digit setelah titik, tambahkan issue
-    if len(decimal_points) > 1:
-        issues.append({
-            'slide': slide_index,
-            'issue': 'Inconsistent Decimal Points',
-            'text': '',
-            'details': f'Found inconsistent decimal points: {list(decimal_points)}'
-        })
-    
     # Jika reference_decimal_points belum ada, set sebagai referensi
     if reference_decimal_points is None:
         reference_decimal_points = decimal_points.copy()
@@ -44,18 +33,14 @@ def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
     
     # Jika reference_decimal_points sudah ada, periksa konsistensi dengan referensi
     else:
-        if decimal_points != reference_decimal_points:
-            # Pastikan reference_decimal_points tidak kosong sebelum melakukan pop()
-            if reference_decimal_points:
-                ref_point = reference_decimal_points.pop()
-                reference_decimal_points.add(ref_point)  # Kembalikan ke set
+        ref_point = next(iter(reference_decimal_points))  # Ambil nilai referensi
+        for decimal_point in decimal_points:
+            if decimal_point != ref_point:
                 issues.append({
                     'slide': slide_index,
                     'issue': 'Inconsistent Decimal Points',
                     'text': '',
-                    'details': f'Decimal points on slide {slide_index} are inconsistent. Expected {ref_point} decimal places, found {list(decimal_points)}.'
+                    'details': f'Decimal points on slide {slide_index} are inconsistent. Expected {ref_point} decimal places, found {decimal_point}.'
                 })
-            else:
-                logging.error(f"reference_decimal_points is empty on slide {slide_index}")
     
     return issues, reference_decimal_points
