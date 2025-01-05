@@ -128,6 +128,11 @@
 #                         logging.debug(f"Issue: {issue}")
 
 #                 with open(log_output_path, "r") as log_file:
+#                     log_content = log_file.read()
+#                     st.text_area("Validation Log", value=log_content, height=300)
+
+# if __name__ == "__main__":
+#     main()
 
 ##################
 
@@ -273,8 +278,4 @@ if __name__ == "__main__":
     main()
 
 
-#                     log_content = log_file.read()
-#                     st.text_area("Validation Log", value=log_content, height=300)
 
-# if __name__ == "__main__":
-#     main()
