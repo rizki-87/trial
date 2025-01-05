@@ -405,7 +405,19 @@ def main():
                 st.session_state['csv_output'] = csv_output_path.read_bytes()
                 st.session_state['ppt_output'] = highlighted_ppt_path.read_bytes()
                 st.session_state['validation_completed'] = True
+                st.session_state['issues'] = issues
+                st.session_state['log_output_path'] = str(Path(tmpdir) / "validation_log.txt")
                 st.success("Validation completed!")
+
+                # Write Logs
+                log_output_path = st.session_state['log_output_path']
+                with open(log_output_path, "w") as log_file:
+                    for handler in logging.root.handlers[:]:
+                        logging.root.removeHandler(handler)
+                    logging.basicConfig(filename=log_output_path, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+                    logging.debug(f"Validation completed with {len(issues)} issues.")
+                    for issue in issues:
+                        logging.debug(f"Issue: {issue}")
 
     # Display Download Buttons if validation has been completed
     if st.session_state.get('validation_completed', False):
@@ -415,18 +427,11 @@ def main():
             st.download_button("Download Highlighted PPT", st.session_state['ppt_output'], file_name="highlighted_presentation.pptx")
 
         # Display Logs
-        log_output_path = Path(tmpdir) / "validation_log.txt"
-        with open(log_output_path, "w") as log_file:
-            for handler in logging.root.handlers[:]:
-                logging.root.removeHandler(handler)
-            logging.basicConfig(filename=log_output_path, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-            logging.debug(f"Validation completed with {len(issues)} issues.")
-            for issue in issues:
-                logging.debug(f"Issue: {issue}")
-
-        with open(log_output_path, "r") as log_file:
-            log_content = log_file.read()
-            st.text_area("Validation Log", value=log_content, height=300)
+        log_output_path = st.session_state.get('log_output_path', None)
+        if log_output_path and Path(log_output_path).exists():
+            with open(log_output_path, "r") as log_file:
+                log_content = log_file.read()
+                st.text_area("Validation Log", value=log_content, height=300)
 
 if __name__ == "__main__":
     main()
