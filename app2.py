@@ -152,7 +152,7 @@ from utils.spelling_validation import is_exempted, validate_spelling_slide
 from utils.decimal_validation import validate_decimal_consistency
 from utils.million_notation_validation import validate_million_notations
 from config import PREDEFINED_PASSWORD, TECHNICAL_TERMS, NUMERIC_TERMS
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor  # Pastikan ini ada
 
 # Initialize LanguageTool
 grammar_tool = initialize_language_tool()
@@ -271,6 +271,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 #                     log_content = log_file.read()
 #                     st.text_area("Validation Log", value=log_content, height=300)
