@@ -3,6 +3,9 @@
 import re
 import logging
 
+# Simpan pola regex dalam variabel
+decimal_pattern = re.compile(r'\b\d+[\.,]\d+\b')
+
 def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
     issues = []
     decimal_points = set()
@@ -13,7 +16,7 @@ def validate_decimal_consistency(slide, slide_index, reference_decimal_points):
                 for run in paragraph.runs:
                     text = run.text
                     # Cari semua angka desimal dengan titik atau koma sebagai pemisah desimal
-                    matches = re.findall(r'\b\d+[\.,]\d+\b', text)
+                    matches = decimal_pattern.findall(text)
                     for match in matches:
                         # Ganti koma dengan titik untuk konsistensi
                         match = match.replace(',', '.')
