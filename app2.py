@@ -404,28 +404,29 @@ def main():
                 # Store results in session state
                 st.session_state['csv_output'] = csv_output_path.read_bytes()
                 st.session_state['ppt_output'] = highlighted_ppt_path.read_bytes()
+                st.session_state['validation_completed'] = True
                 st.success("Validation completed!")
 
-                # Display Download Buttons
-                if 'csv_output' in st.session_state:
-                    st.download_button("Download Validation Report (CSV)", st.session_state['csv_output'], file_name="validation_report.csv")
-                if 'ppt_output' in st.session_state:
-                    st.download_button("Download Highlighted PPT", st.session_state['ppt_output'], file_name="highlighted_presentation.pptx")
+    # Display Download Buttons if validation has been completed
+    if st.session_state.get('validation_completed', False):
+        if 'csv_output' in st.session_state:
+            st.download_button("Download Validation Report (CSV)", st.session_state['csv_output'], file_name="validation_report.csv")
+        if 'ppt_output' in st.session_state:
+            st.download_button("Download Highlighted PPT", st.session_state['ppt_output'], file_name="highlighted_presentation.pptx")
 
-                # Display Logs
-                log_output_path = Path(tmpdir) / "validation_log.txt"
-                with open(log_output_path, "w") as log_file:
-                    for handler in logging.root.handlers[:]:
-                        logging.root.removeHandler(handler)
-                    logging.basicConfig(filename=log_output_path, level=logging.DEBUG, format='%(asctime)s - %(levellevelname)s - %(message)s')
-                    logging.debug(f"Validation completed with {len(issues)} issues.")
-                    for issue in issues:
-                        logging.debug(f"Issue: {issue}")
+        # Display Logs
+        log_output_path = Path(tmpdir) / "validation_log.txt"
+        with open(log_output_path, "w") as log_file:
+            for handler in logging.root.handlers[:]:
+                logging.root.removeHandler(handler)
+            logging.basicConfig(filename=log_output_path, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+            logging.debug(f"Validation completed with {len(issues)} issues.")
+            for issue in issues:
+                logging.debug(f"Issue: {issue}")
 
-                with open(log_output_path, "r") as log_file:
-                    log_content = log_file.read()
-                    st.text_area("Validation Log", value=log_content, height=300)
+        with open(log_output_path, "r") as log_file:
+            log_content = log_file.read()
+            st.text_area("Validation Log", value=log_content, height=300)
 
 if __name__ == "__main__":
     main()
-
