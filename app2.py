@@ -136,7 +136,7 @@
 
 ##################
 
-# app.py
+# app2.py
 
 import streamlit as st
 import tempfile
@@ -144,20 +144,15 @@ from pathlib import Path
 from pptx import Presentation
 from spellchecker import SpellChecker
 import language_tool_python
-import csv
-import re
-import string
-from pptx.dml.color import RGBColor
 import logging
-from pydantic import BaseModel
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from utils.validation import highlight_ppt, save_to_csv
 from utils.font_validation import validate_fonts_slide
 from utils.grammar_validation import initialize_language_tool, validate_grammar_slide
-from utils.spelling_validation import is_exempted, validate_spelling_slide
+from utils.spelling_validation import validate_spelling_slide
 from utils.decimal_validation import validate_decimal_consistency
 from utils.million_notation_validation import validate_million_notations
 from config import PREDEFINED_PASSWORD, TECHNICAL_TERMS, NUMERIC_TERMS
-from concurrent.futures import ThreadPoolExecutor, as_completed  # Pastikan ini ada
 
 # Initialize LanguageTool
 grammar_tool = initialize_language_tool()
@@ -167,9 +162,40 @@ spell = SpellChecker()
 spell.word_frequency.load_words(TECHNICAL_TERMS.union(NUMERIC_TERMS))
 
 # Configure logging
-logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Password Protection
+def validate_slide(slide, slide_index, reference_decimal_points):
+    slide_issues = []
+    logging.debug(f"Validating slide {slide_index + 1}")
+
+    # Validasi ejaan
+    spelling_issues = validate_spelling_slide(slide, slide_index + 1, spell)
+    logging.debug(f"Spelling issues for slide {slide_index + 1}: {spelling_issues}")
+    slide_issues.extend(spelling_issues)
+
+    # Validasi font
+    font_issues = validate_fonts_slide(slide, slide_index + 1, default_font)
+    logging.debug(f"Font issues for slide {slide_index + 1}: {font_issues}")
+    slide_issues.extend(font_issues)
+
+    # Validasi tata bahasa
+    grammar_issues = validate_grammar_slide(slide, slide_index + 1, grammar_tool)
+    logging.debug(f"Grammar issues for slide {slide_index + 1}: {grammar_issues}")
+    slide_issues.extend(grammar_issues)
+
+    # Validasi desimal
+    decimal_issues, reference_decimal_points = validate_decimal_consistency(slide, slide_index + 1, reference_decimal_points)
+    logging.debug(f"Decimal issues for slide {slide_index + 1}: {decimal_issues}")
+    slide_issues.extend(decimal_issues)
+
+    # Validasi notasi juta
+    million_issues = validate_million_notations(slide, slide_index + 1)
+    logging.debug(f"Million notation issues for slide {slide_index + 1}: {million_issues}")
+    slide_issues.extend(million_issues)
+
+    logging.debug(f"Slide {slide_index + 1} issues: {slide_issues}")
+    return slide_issues, reference_decimal_points
+
 def password_protection():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
@@ -184,16 +210,6 @@ def password_protection():
                 st.error("Incorrect Password")
         return False
     return True
-
-def validate_slide(slide, slide_index, reference_decimal_points):
-    slide_issues = []
-    slide_issues.extend(validate_spelling_slide(slide, slide_index + 1, spell))
-    slide_issues.extend(validate_fonts_slide(slide, slide_index + 1, default_font))
-    slide_issues.extend(validate_grammar_slide(slide, slide_index + 1, grammar_tool))
-    decimal_issues, reference_decimal_points = validate_decimal_consistency(slide, slide_index + 1, reference_decimal_points)
-    slide_issues.extend(decimal_issues)
-    slide_issues.extend(validate_million_notations(slide, slide_index + 1))
-    return slide_issues, reference_decimal_points
 
 def main():
     if not password_protection():
@@ -230,7 +246,7 @@ def main():
                 # Paralel Processing
                 with ThreadPoolExecutor() as executor:
                     futures = {executor.submit(validate_slide, presentation.slides[i], i, reference_decimal_points): i for i in range(start_slide - 1, end_slide)}
-                    for future in as_completed(futures):  # Ganti 'concurrent.futures.as_completed' dengan 'as_completed'
+                    for future in as_completed(futures):
                         slide_index = futures[future]
                         try:
                             slide_issues, reference_decimal_points = future.result()
@@ -273,6 +289,9 @@ def main():
                 with open(log_output_path, "r") as log_file:
                     log_content = log_file.read()
                     st.text_area("Validation Log", value=log_content, height=300)
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main()
