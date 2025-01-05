@@ -284,8 +284,7 @@
 
 ###########################
 
-# app2.py
-
+from concurrent.futures import ThreadPoolExecutor
 import streamlit as st
 import tempfile
 from pathlib import Path
@@ -298,7 +297,6 @@ import string
 from pptx.dml.color import RGBColor
 import logging
 from pydantic import BaseModel
-from concurrent.futures import ThreadPoolExecutor
 from utils.validation import highlight_ppt, save_to_csv
 from utils.font_validation import validate_fonts_slide
 from utils.grammar_validation import initialize_language_tool, validate_grammar_slide
@@ -306,6 +304,13 @@ from utils.spelling_validation import is_exempted, validate_spelling_slide
 from utils.decimal_validation import validate_decimal_consistency
 from utils.million_notation_validation import validate_million_notations
 from config import PREDEFINED_PASSWORD, TECHNICAL_TERMS, NUMERIC_TERMS
+
+# Initialize LanguageTool
+grammar_tool = initialize_language_tool()
+
+# Initialize SpellChecker
+spell = SpellChecker()
+spell.word_frequency.load_words(TECHNICAL_TERMS.union(NUMERIC_TERMS))
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -330,11 +335,11 @@ def validate_slide(slide, slide_index, default_font, spell, grammar_tool, refere
     slide_issues = []
 
     # Validate Spelling
-    slide_issues.extend(validate_spelling_slide(slide, slide_index + 1, spell))
+    slide_issues.extend(validate_spelling_slide(slide, slide_index + 1))
     # Validate Fonts
     slide_issues.extend(validate_fonts_slide(slide, slide_index + 1, default_font))
     # Validate Grammar
-    slide_issues.extend(validate_grammar_slide(slide, slide_index + 1, grammar_tool))
+    slide_issues.extend(validate_grammar_slide(slide, slide_index + 1))
     # Validate Decimal Consistency
     decimal_issues, reference_decimal_points = validate_decimal_consistency(slide, slide_index + 1, reference_decimal_points)
     slide_issues.extend(decimal_issues)
@@ -374,13 +379,6 @@ def main():
                 progress_text = st.empty()
                 issues = []
                 reference_decimal_points = None
-
-                # Initialize LanguageTool
-                grammar_tool = initialize_language_tool()
-
-                # Initialize SpellChecker
-                spell = SpellChecker()
-                spell.word_frequency.load_words(TECHNICAL_TERMS.union(NUMERIC_TERMS))
 
                 # Parallel Processing
                 with ThreadPoolExecutor() as executor:
