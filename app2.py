@@ -157,7 +157,7 @@ from utils.spelling_validation import is_exempted, validate_spelling_slide
 from utils.decimal_validation import validate_decimal_consistency
 from utils.million_notation_validation import validate_million_notations
 from config import PREDEFINED_PASSWORD, TECHNICAL_TERMS, NUMERIC_TERMS
-from concurrent.futures import ThreadPoolExecutor  # Pastikan ini ada
+from concurrent.futures import ThreadPoolExecutor, as_completed  # Pastikan ini ada
 
 # Initialize LanguageTool
 grammar_tool = initialize_language_tool()
@@ -230,7 +230,7 @@ def main():
                 # Paralel Processing
                 with ThreadPoolExecutor() as executor:
                     futures = {executor.submit(validate_slide, presentation.slides[i], i, reference_decimal_points): i for i in range(start_slide - 1, end_slide)}
-                    for future in concurrent.futures.as_completed(futures):
+                    for future in as_completed(futures):  # Ganti 'concurrent.futures.as_completed' dengan 'as_completed'
                         slide_index = futures[future]
                         try:
                             slide_issues, reference_decimal_points = future.result()
