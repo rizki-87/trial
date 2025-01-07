@@ -234,55 +234,64 @@ async def main():
             with open(temp_ppt_path, "wb") as f:  
                 f.write(uploaded_file.getbuffer())  
   
-            presentation = Presentation(temp_ppt_path)  
-            total_slides = len(presentation.slides)  
+            try:  
+                presentation = Presentation(temp_ppt_path)  
+                total_slides = len(presentation.slides)  
   
-            # Slide Range Selection  
-            start_slide, end_slide = 1, total_slides  
-            if validation_option == "Custom Range":  
-                start_slide = st.number_input("From Slide", min_value=1, max_value=total_slides, value=1)  
-                end_slide_default = min(total_slides, 100)  
-                end_slide = st.number_input("To Slide", min_value=start_slide, max_value=total_slides, value=end_slide_default)  
+                # Slide Range Selection  
+                start_slide, end_slide = 1, total_slides  
+                if validation_option == "Custom Range":  
+                    start_slide = st.number_input("From Slide", min_value=1, max_value=total_slides, value=1)  
+                    end_slide_default = min(total_slides, 100)  
+                    end_slide = st.number_input("To Slide", min_value=start_slide, max_value=total_slides, value=end_slide_default)  
   
-            if st.button("Run Validation"):  
-                progress_bar = st.progress(0)  
-                progress_text = st.empty()  
-                issues = []  
-                batch_size = 10  # Adjust as needed  
-                total_slides_to_process = end_slide - start_slide + 1  
-                total_batches = (total_slides_to_process + batch_size - 1) // batch_size  
+                if st.button("Run Validation"):  
+                    progress_bar = st.progress(0)  
+                    progress_text = st.empty()  
+                    issues = []  
+                    batch_size = 10  # Adjust as needed  
+                    total_slides_to_process = end_slide - start_slide + 1  
+                    total_batches = (total_slides_to_process + batch_size - 1) // batch_size  
   
-                for batch_index in range(total_batches):  
-                    start_index = start_slide - 1 + batch_index * batch_size  
-                    end_index = min(start_slide - 1 + (batch_index + 1) * batch_size, end_slide)  
-                    batch_slides = presentation.slides[start_index:end_index]  
-                    slide_issues = await process_slide_batch(batch_slides, default_font, spell, grammar_tool, decimal_places)  
-                    issues.extend(slide_issues)  
-                    progress_percent = int((batch_index + 1) / total_batches * 100)  
-                    progress_text.text(f"Progress: {progress_percent}%")  
-                    progress_bar.progress(progress_percent / 100)  
+                    try:  
+                        for batch_index in range(total_batches):  
+                            start_index = max(0, min(start_slide - 1 + batch_index * batch_size, total_slides - 1))  
+                            end_index = min(total_slides, start_slide - 1 + (batch_index + 1) * batch_size)  
+                            batch_slides = presentation.slides[start_index:end_index]  
+                            slide_issues = await process_slide_batch(batch_slides, default_font, spell, grammar_tool, decimal_places)  
+                            issues.extend(slide_issues)  
+                            progress_percent = int((batch_index + 1) / total_batches * 100)  
+                            progress_text.text(f"Progress: {progress_percent}%")  
+                            progress_bar.progress(progress_percent / 100)  
   
-                csv_output_path = Path(tmpdir) / "validation_report.csv"  
-                highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"  
-                save_to_csv(issues, csv_output_path)  
-                highlight_ppt(temp_ppt_path, highlighted_ppt_path, issues)  
+                        csv_output_path = Path(tmpdir) / "validation_report.csv"  
+                        highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"  
+                        save_to_csv(issues, csv_output_path)  
+                        highlight_ppt(temp_ppt_path, highlighted_ppt_path, issues)  
   
-                st.session_state['csv_output'] = csv_output_path.read_bytes()  
-                st.session_state['ppt_output'] = highlighted_ppt_path.read_bytes()  
-                st.session_state['validation_completed'] = True  
-                st.session_state['issues'] = issues  
-                st.session_state['log_output_path'] = str(Path(tmpdir) / "validation_log.txt")  
-                st.success("Validation completed!")  
+                        st.session_state['csv_output'] = csv_output_path.read_bytes()  
+                        st.session_state['ppt_output'] = highlighted_ppt_path.read_bytes()  
+                        st.session_state['validation_completed'] = True  
+                        st.session_state['issues'] = issues  
+                        st.session_state['log_output_path'] = str(Path(tmpdir) / "validation_log.txt")  
+                        st.success("Validation completed!")  
   
-                # Write Logs  
-                log_output_path = st.session_state['log_output_path']  
-                with open(log_output_path, "w") as log_file:  
-                    for handler in logging.root.handlers[:]:  
-                        logging.root.removeHandler(handler)  
-                    logging.basicConfig(filename=log_output_path, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')  
-                    logging.debug(f"Validation completed with {len(issues)} issues.")  
-                    for issue in issues:  
-                        logging.debug(f"Issue: {issue}")  
+                        # Write Logs  
+                        log_output_path = st.session_state['log_output_path']  
+                        with open(log_output_path, "w") as log_file:  
+                            for handler in logging.root.handlers[:]:  
+                                logging.root.removeHandler(handler)  
+                            logging.basicConfig(filename=log_output_path, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')  
+                            logging.debug(f"Validation completed with {len(issues)} issues.")  
+                            for issue in issues:  
+                                logging.debug(f"Issue: {issue}")  
+  
+                    except Exception as e:  
+                        st.error(f"Error processing slides: {e}")  
+                        return  
+  
+            except Exception as e:  
+                st.error(f"Error loading PowerPoint file: {e}")  
   
     # Display Download Buttons if validation has been completed  
     if st.session_state.get('validation_completed', False):  
