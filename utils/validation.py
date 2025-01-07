@@ -34,7 +34,7 @@ def is_likely_background_image(shape, slide):
     position_threshold = 10  # Pixels  
     size_threshold = 0.9  # Percentage of slide size  
   
-    if shape.shape_type == 13: # MSL_PICTURE  
+    if shape.shape_type == 13: # MSL_PICTURE.  Check if this is correct for your PPTX files.  
         if (shape.left <= position_threshold and shape.top <= position_threshold and  
                 shape.width >= slide_width * size_threshold and shape.height >= slide_height * size_threshold):  
             return True  
@@ -42,4 +42,16 @@ def is_likely_background_image(shape, slide):
   
   
 def save_to_csv(issues, output_csv):  
-    # ... (kode save_to_csv tetap sama) ...  
+    """Saves validation issues to a CSV file."""  
+    try:  
+        with open(output_csv, mode='w', newline='', encoding='utf-8') as file:  
+            fieldnames = ['slide', 'issue', 'text', 'corrected', 'details']  
+            writer = csv.DictWriter(file, fieldnames=fieldnames)  
+            writer.writeheader()  
+            for issue in issues:  
+                if isinstance(issue, dict):  
+                    row = {k: issue.get(k, '') for k in fieldnames}  
+                    writer.writerow(row)  
+    except Exception as e:  
+        logging.error(f"Error saving to CSV: {e}")  
+  
