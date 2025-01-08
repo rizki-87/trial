@@ -1,6 +1,7 @@
 # utils/highlight.py
 
 from pptx.dml.color import RGBColor
+from pptx import Presentation
 
 def highlight_ppt(input_ppt, output_ppt, issues):
     presentation = Presentation(input_ppt)
