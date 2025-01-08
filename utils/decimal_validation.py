@@ -1,9 +1,7 @@
-# utils/decimal_validation.py
-
 import re
 import logging
 
-# Simpan pola regex dalam variabel
+# Save regex pattern in a variable
 decimal_pattern = re.compile(r'\b\d+[\.,]\d+\b')
 
 def validate_decimal_consistency(slide, slide_index, decimal_places):
@@ -14,13 +12,13 @@ def validate_decimal_consistency(slide, slide_index, decimal_places):
             for paragraph in shape.text_frame.paragraphs:
                 for run in paragraph.runs:
                     text = run.text
-                    # Cari semua angka desimal dengan titik atau koma sebagai pemisah desimal
+                    # Find all decimal numbers with either a dot or comma as the decimal separator
                     matches = decimal_pattern.findall(text)
                     logging.debug(f"Slide {slide_index}: Found matches: {matches}")
                     for match in matches:
-                        # Ganti koma dengan titik untuk konsistensi
+                        # Replace comma with dot for consistency
                         match = match.replace(',', '.')
-                        # Hitung jumlah digit setelah titik
+                        # Count the number of digits after the dot
                         decimal_part = match.split('.')[-1]
                         if len(decimal_part) != decimal_places:
                             issues.append({
