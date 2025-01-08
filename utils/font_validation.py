@@ -1,5 +1,3 @@
-# utils/font_validation.py
-
 from pptx.dml.color import RGBColor
 
 def validate_fonts_slide(slide, slide_index, default_font):
