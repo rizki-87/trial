@@ -7,8 +7,13 @@ import logging
 def validate_million_notations(slide, slide_index):
     issues = []
     million_patterns = {
-        r'\b\d+M\b': 'M', r'\b\d+\s?Million\b': 'Million', r'\b\d+mn\b': 'mn', r'\b\d+\sm\b': 'm',
-        r'\b\d+MM\b': 'MM', r'\b\d+\s?Millions\b': 'Millions', r'\b\d+\s?Juta\b': 'Juta'
+        r'\b\d+M\b': 'M', 
+        r'\b\d+\s?Million\b': 'Million', 
+        r'\b\d+mn\b': 'mn', 
+        r'\b\d+\sm\b': 'm',
+        r'\b\d+MM\b': 'MM', 
+        r'\b\d+\s?Millions\b': 'Millions', 
+        r'\b\d+\s?Juta\b': 'Juta'
     }
     notation_set = set()
     all_matches = []
