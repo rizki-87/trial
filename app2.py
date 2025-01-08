@@ -166,12 +166,13 @@ from pptx.dml.color import RGBColor
 import logging
 import time
 from pydantic import BaseModel
-from utils.highlight import highlight_ppt, save_to_csv  # Pastikan ini diimpor dari highlight.py
+from utils.highlight import highlight_ppt, save_to_csv
 from utils.font_validation import validate_fonts_slide
 from utils.grammar_validation import initialize_language_tool, validate_grammar_slide
 from utils.spelling_validation import is_exempted, validate_spelling_slide
 from utils.decimal_validation import validate_decimal_consistency
 from utils.million_notation_validation import validate_million_notations
+from utils.validation import validate_tables, validate_charts  # Pastikan ini diimpor
 from config import PREDEFINED_PASSWORD, TECHNICAL_TERMS, NUMERIC_TERMS
 
 # Initialize LanguageTool
