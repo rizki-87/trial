@@ -52,3 +52,18 @@ def validate_spelling_in_text(text, slide_index):
                     'corrected': correction
                 })
     return issues
+def validate_spelling_in_text(text, slide_index):
+    issues = []
+    words = re.findall(r"\b[\w+]+\b", text)
+    for word in words:
+        clean_word = word.strip(string.punctuation)
+        if clean_word.lower() not in spell:
+            correction = spell.correction(clean_word)
+            if correction and correction != clean_word:
+                issues.append({
+                    'slide': slide_index,
+                    'issue': 'Misspelling',
+                    'text': word,
+                    'corrected': correction
+                })
+    return issues
