@@ -1,6 +1,5 @@
 # utils/million_notation_validation.py
 
-million
 
 import re
 import logging  
