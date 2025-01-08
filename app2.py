@@ -166,14 +166,13 @@ from pptx.dml.color import RGBColor
 import logging
 import time
 from pydantic import BaseModel
-from utils.validation import highlight_ppt, save_to_csv
+from utils.highlight import highlight_ppt, save_to_csv  # Pastikan ini diimpor dari highlight.py
 from utils.font_validation import validate_fonts_slide
 from utils.grammar_validation import initialize_language_tool, validate_grammar_slide
 from utils.spelling_validation import is_exempted, validate_spelling_slide
 from utils.decimal_validation import validate_decimal_consistency
 from utils.million_notation_validation import validate_million_notations
 from config import PREDEFINED_PASSWORD, TECHNICAL_TERMS, NUMERIC_TERMS
-from utils.highlight import highlight_ppt, save_to_csv
 
 # Initialize LanguageTool
 grammar_tool = initialize_language_tool()
@@ -256,6 +255,7 @@ def main():
                 progress_bar = st.progress(0)
                 progress_text = st.empty()
                 issues = []
+
                 # Parallel Processing
                 with ThreadPoolExecutor() as executor:
                     futures = []
