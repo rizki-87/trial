@@ -48,4 +48,3 @@ def validate_spelling_in_text(text, slide_index):
                     'corrected': correction
                 })
     return issues
-
