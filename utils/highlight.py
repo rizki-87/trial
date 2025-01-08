@@ -14,7 +14,7 @@ def highlight_ppt(input_ppt, output_ppt, issues):
                             if issue['text'] in run.text:
                                 run.font.color.rgb = RGBColor(255, 255, 0)
 
-    # Jika Anda perlu mengakses slide_width dan slide_height, lakukan seperti ini:
+    # Akses slide_width dan slide_height dari objek Presentation
     slide_width = presentation.slide_width
     slide_height = presentation.slide_height
 
