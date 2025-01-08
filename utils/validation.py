@@ -1,57 +1,54 @@
-from pptx import Presentation  
-from pptx.dml.color import RGBColor  
-import csv  
-import logging  
-  
-def highlight_ppt(input_ppt, output_ppt, issues):  
-    """Highlights issues in a PowerPoint presentation, ignoring likely background images."""  
-    try:  
-        presentation = Presentation(input_ppt)  
-        for issue in issues:  
-            if isinstance(issue, dict):  
-                slide_index = issue['slide'] - 1  
-                if 0 <= slide_index < len(presentation.slides):  
-                    slide = presentation.slides[slide_index]  
-                    for shape in slide.shapes:  
-                        if shape.has_text_frame:  
-                            for paragraph in shape.text_frame.paragraphs:  
-                                for run in paragraph.runs:  
-                                    if issue['text'] in run.text:  
-                                        run.font.color.rgb = RGBColor(255, 255, 0)  
-                        elif is_likely_background_image(shape, slide):  
-                            continue  # Ignore likely background images  
-  
-        presentation.save(output_ppt)  
-    except Exception as e:  
-        logging.error(f"Error highlighting PPT: {e}")  
-  
-  
-def is_likely_background_image(shape, slide):  
-    """Checks if a shape is likely a background image based on its position and size."""  
-    slide_width = slide.slide_width  
-    slide_height = slide.slide_height  
-    # Adjust thresholds as needed  
-    position_threshold = 10  # Pixels  
-    size_threshold = 0.9  # Percentage of slide size  
-  
-    if shape.shape_type == 13: # MSL_PICTURE.  Check if this is correct for your PPTX files.  
-        if (shape.left <= position_threshold and shape.top <= position_threshold and  
-                shape.width >= slide_width * size_threshold and shape.height >= slide_height * size_threshold):  
-            return True  
-    return False  
-  
-  
-def save_to_csv(issues, output_csv):  
-    """Saves validation issues to a CSV file."""  
-    try:  
-        with open(output_csv, mode='w', newline='', encoding='utf-8') as file:  
-            fieldnames = ['slide', 'issue', 'text', 'corrected', 'details']  
-            writer = csv.DictWriter(file, fieldnames=fieldnames)  
-            writer.writeheader()  
-            for issue in issues:  
-                if isinstance(issue, dict):  
-                    row = {k: issue.get(k, '') for k in fieldnames}  
-                    writer.writerow(row)  
-    except Exception as e:  
-        logging.error(f"Error saving to CSV: {e}")  
-  
+from pptx import Presentation
+import re
+import logging
+
+def validate_tables(slide, slide_index):
+    issues = []
+    for shape in slide.shapes:
+        if shape.has_table:
+            table = shape.table
+            for row in table.rows:
+                for cell in row.cells:
+                    # Validasi teks di dalam sel
+                    text = cell.text.strip()
+                    if text:  # Jika ada teks
+                        # Tambahkan logika validasi sesuai kebutuhan
+                        issues.extend(validate_spelling_in_text(text, slide_index))
+    return issues
+
+def validate_charts(slide, slide_index):
+    issues = []
+    for shape in slide.shapes:
+        if shape.has_chart:
+            chart = shape.chart
+            # Validasi data di dalam chart
+            for series in chart.series:
+                for point in series.points:
+                    # Misalnya, validasi label data
+                    label = point.data_label.text.strip()
+                    if label:
+                        issues.extend(validate_spelling_in_text(label, slide_index))
+            # Jika chart memiliki data yang ditampilkan dalam tabel, validasi juga
+            if chart.has_data_table:
+                for row in chart.data_table.rows:
+                    for cell in row.cells:
+                        text = cell.text.strip()
+                        if text:
+                            issues.extend(validate_spelling_in_text(text, slide_index))
+    return issues
+
+def validate_spelling_in_text(text, slide_index):
+    issues = []
+    words = re.findall(r"\b[\w+]+\b", text)
+    for word in words:
+        clean_word = word.strip(string.punctuation)
+        if clean_word.lower() not in spell:
+            correction = spell.correction(clean_word)
+            if correction and correction != clean_word:
+                issues.append({
+                    'slide': slide_index,
+                    'issue': 'Misspelling in Table/Chart',
+                    'text': word,
+                    'corrected': correction
+                })
+    return issues
