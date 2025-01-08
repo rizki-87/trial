@@ -252,12 +252,12 @@ async def main():
                     batch_size = 10  # Adjust as needed  
                     total_slides_to_process = end_slide - start_slide + 1  
                     total_batches = (total_slides_to_process + batch_size - 1) // batch_size  
-  
+
                     try:  
                         for batch_index in range(total_batches):  
                             start_index = max(0, min(start_slide - 1 + batch_index * batch_size, total_slides - 1))  
                             end_index = min(total_slides, start_slide - 1 + (batch_index + 1) * batch_size)  
-                            batch_slides = presentation.slides[start_index:end_index]  
+                            batch_slides = [presentation.slides[i] for i in range(start_index, end_index)]  # Perubahan di sini
                             slide_issues = await process_slide_batch(batch_slides, default_font, spell, grammar_tool, decimal_places)  
                             issues.extend(slide_issues)  
                             progress_percent = int((batch_index + 1) / total_batches * 100)  
