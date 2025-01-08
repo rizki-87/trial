@@ -1,7 +1,7 @@
 import re
 import logging
-import string  # Tambahkan ini untuk mengimpor modul string
-from utils.spelling_validation import validate_spelling_in_text  # Pastikan ini diimpor dari spelling_validation.py
+import string
+from utils.spelling_validation import validate_spelling_slide, validate_spelling_in_text  # Pastikan ini diimpor
 
 def validate_tables(slide, slide_index):
     issues = []
@@ -34,20 +34,4 @@ def validate_charts(slide, slide_index):
                         text = cell.text.strip()
                         if text:
                             issues.extend(validate_spelling_in_text(text, slide_index))
-    return issues
-
-def validate_spelling_in_text(text, slide_index):
-    issues = []
-    words = re.findall(r"\b[\w+]+\b", text)
-    for word in words:
-        clean_word = word.strip(string.punctuation)
-        if clean_word.lower() not in spell:
-            correction = spell.correction(clean_word)
-            if correction and correction != clean_word:
-                issues.append({
-                    'slide': slide_index,
-                    'issue': 'Misspelling',
-                    'text': word,
-                    'corrected': correction
-                })
     return issues
