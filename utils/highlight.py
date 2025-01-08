@@ -23,7 +23,7 @@ def highlight_ppt(input_ppt, output_ppt, issues):
                             if issue['text'] in run.text:
                                 run.font.color.rgb = RGBColor(255, 255, 0)  # Highlight in yellow
 
-    # Simpan presentasi yang telah disorot
+    # Save the highlighted presentation
     presentation.save(output_ppt)
 
 def save_to_csv(issues, output_csv):
