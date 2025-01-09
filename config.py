@@ -3,6 +3,7 @@
 PREDEFINED_PASSWORD = "securepassword123"  
   
 TECHNICAL_TERMS = {  
+    "m", "b", "c", "d", "vs", "Apr", "22-May", "22-Dec", "23-Feb", "Forex", "forex", "OWC",
     "Sediver", "CoV", "quantitatively", "th", "databooks", "ngagement", "ransaction", "fr", "T", "Appendices", 
     "LATAM", "insulators", "Sediver", "Acquiror", "Nusco", "P", "LTDA", "roposed",
     "IfError", "s", "Sarl", "SEVES", "XYZG", "Galova", "galova", "fayet", "Fayet", "Sarl", "KMPG",
