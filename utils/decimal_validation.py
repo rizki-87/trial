@@ -1,5 +1,4 @@
 import re
-import re
 import logging
 
 # Save regex pattern in a variable
