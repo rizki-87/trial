@@ -80,8 +80,7 @@ def main():
     font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]
     default_font = st.selectbox("Select the default font for validation", font_options)
     decimal_places = st.number_input("Enter the number of decimal places for validation", min_value=0, max_value=10, value=1)
-    
-    # Pilihan Notasi
+        # Pilihan Notasi
     notation_options = ["m", "M", "Mn"]
     selected_notation = st.selectbox("Select Notation for Validation", notation_options)
 
@@ -102,7 +101,8 @@ def main():
                 start_slide = st.number_input("From Slide", min_value=1, max_value=total_slides, value=1)
                 end_slide_default = min(total_slides, 100)
                 end_slide = st.number_input("To Slide", min_value=start_slide, max_value=total_slides, value=end_slide_default)
-if st.button("Run Validation"):
+
+            if st.button("Run Validation"):
                 progress_bar = st.progress(0)
                 progress_text = st.empty()
                 issues = []
@@ -146,7 +146,7 @@ if st.button("Run Validation"):
                         logging.debug(f"Issue: {issue}")
 
     # Tampilkan Tombol Unduh jika validasi telah selesai
-if st.session_state.get('validation_completed', False):
+    if st.session_state.get('validation_completed', False):
         if 'csv_output' in st.session_state:
             st.download_button("Download Validation Report (CSV)", st.session_state['csv_output'], file_name="validation_report.csv")
         if 'ppt_output' in st.session_state:
