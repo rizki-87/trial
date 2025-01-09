@@ -67,7 +67,7 @@ def validate_slide(slide, slide_index, default_font, spell, grammar_tool, decima
     slide_issues.extend(validate_tables(slide, slide_index + 1))
     # Validate Charts
     slide_issues.extend(validate_charts(slide, slide_index + 1))
-elapsed_time = time.time() - start_time
+    elapsed_time = time.time() - start_time
     logging.debug(f"Slide {slide_index + 1} validation completed in {elapsed_time:.2f} seconds.")
 
     return slide_issues
