@@ -95,14 +95,14 @@ def main():
 
             presentation = Presentation(temp_ppt_path)
             total_slides = len(presentation.slides)
+
             # Rentang Slide
             start_slide, end_slide = 1, total_slides
             if validation_option == "Custom Range":
                 start_slide = st.number_input("From Slide", min_value=1, max_value=total_slides, value=1)
                 end_slide_default = min(total_slides, 100)
                 end_slide = st.number_input("To Slide", min_value=start_slide, max_value=total_slides, value=end_slide_default)
-
-            if st.button("Run Validation"):
+if st.button("Run Validation"):
                 progress_bar = st.progress(0)
                 progress_text = st.empty()
                 issues = []
