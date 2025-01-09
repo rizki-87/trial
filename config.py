@@ -3,6 +3,7 @@
 PREDEFINED_PASSWORD = "securepassword123"  
   
 TECHNICAL_TERMS = {  
+    "IfError", "s", "Sarl", "SEVES", "XYZG", "Galova", "galova", "fayet", "Fayet", "Sarl", "KMPG",
     "TensorFlow", "Caret", "ML", "DALL-E", "MLOps", "PyTorch", "MENA", "Keras", "Scikit-learn", "NumPy", "Pandas", "DALL",  
     "Matplotlib", "OpenAI", "GPT-3", "Deep Learning", "Neural Network", "Data Science", "Seaborn", "Jupyter",  
     "Anaconda", "Reinforcement Learning", "Supervised Learning", "Unsupervised Learning",  
