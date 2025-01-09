@@ -84,7 +84,7 @@ def main():
     
     # New: Select Notation
     notation_options = ["m", "M", "Mn"]
-    selected_notation = st.selectbox("Select Notation for Validation", notation_options)
+    selected_notation = st.selectbox("Select notation for validation", notation_options)
 
     validation_option = st.radio("Validation Option:", ["All Slides", "Custom Range"])
 
