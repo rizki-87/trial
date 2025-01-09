@@ -146,7 +146,7 @@ if st.button("Run Validation"):
                         logging.debug(f"Issue: {issue}")
 
     # Tampilkan Tombol Unduh jika validasi telah selesai
-    if st.session_state.get('validation_completed', False):
+if st.session_state.get('validation_completed', False):
         if 'csv_output' in st.session_state:
             st.download_button("Download Validation Report (CSV)", st.session_state['csv_output'], file_name="validation_report.csv")
         if 'ppt_output' in st.session_state:
