@@ -1,9 +1,7 @@
-# utils/million_notation_validation.py
-
 import re
 import logging
 
-def validate_million_notations(slide, slide_index, notation='m', decimal_places=0):
+def validate_million_notations(slide, slide_index, notation='m'):
     issues = []
     
     # Menentukan pola regex berdasarkan notasi yang dipilih
@@ -28,6 +26,7 @@ def validate_million_notations(slide, slide_index, notation='m', decimal_places=
                 for match in matches:
                     notation_set.add(match.strip())
     
+    # Cek konsistensi notasi
     if len(notation_set) > 1:
         for match in all_matches:
             issues.append({
@@ -36,5 +35,11 @@ def validate_million_notations(slide, slide_index, notation='m', decimal_places=
                 'text': match,
                 'details': f'Found inconsistent million notations: [using {", ".join(notation_set)}]'
             })
+    elif len(notation_set) == 0:
+        issues.append({
+            'slide': slide_index,
+            'issue': 'No Million Notation Found',
+            'details': f'Expected notation: {notation}'
+        })
 
     return issues
