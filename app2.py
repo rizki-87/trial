@@ -80,9 +80,9 @@ def main():
     default_font = st.selectbox("Select the default font for validation", font_options)
     decimal_places = st.number_input("Enter the number of decimal places for validation", min_value=0, max_value=10, value=1)
     
-    # New: Select Notation
+    # Pilihan Notasi
     notation_options = ["m", "M", "Mn"]
-    selected_notation = st.selectbox("Select notation for validation", notation_options)
+    selected_notation = st.selectbox("Select Notation for Validation", notation_options)
 
     validation_option = st.radio("Validation Option:", ["All Slides", "Custom Range"])
 
@@ -95,11 +95,11 @@ def main():
             presentation = Presentation(temp_ppt_path)
             total_slides = len(presentation.slides)
 
-            # Slide Range Selection
+            # Rentang Slide
             start_slide, end_slide = 1, total_slides
             if validation_option == "Custom Range":
                 start_slide = st.number_input("From Slide", min_value=1, max_value=total_slides, value=1)
-                end_slide_default = min(total_slides, 100)  # Ensure default value does not exceed total slides
+                end_slide_default = min(total_slides, 100)
                 end_slide = st.number_input("To Slide", min_value=start_slide, max_value=total_slides, value=end_slide_default)
 
             if st.button("Run Validation"):
@@ -107,7 +107,7 @@ def main():
                 progress_text = st.empty()
                 issues = []
 
-                # Parallel Processing
+                # Proses Paralel
                 with ThreadPoolExecutor() as executor:
                     futures = []
                     for slide_index in range(start_slide - 1, end_slide):
@@ -121,13 +121,12 @@ def main():
                         progress_text.text(f"Progress: {progress_percent}%")
                         progress_bar.progress(progress_percent / 100)
 
-                # Save Results
+                # Simpan Hasil
                 csv_output_path = Path(tmpdir) / "validation_report.csv"
                 highlighted_ppt_path = Path(tmpdir) / "highlighted_presentation.pptx"
                 save_to_csv(issues, csv_output_path)
                 highlight_ppt(temp_ppt_path, highlighted_ppt_path, issues)
-
-                # Store results in session state
+                # Simpan hasil di session state
                 st.session_state['csv_output'] = csv_output_path.read_bytes()
                 st.session_state['ppt_output'] = highlighted_ppt_path.read_bytes()
                 st.session_state['validation_completed'] = True
@@ -135,7 +134,7 @@ def main():
                 st.session_state['log_output_path'] = str(Path(tmpdir) / "validation_log.txt")
                 st.success("Validation completed!")
 
-                # Write Logs
+                # Tulis Log
                 log_output_path = st.session_state['log_output_path']
                 with open(log_output_path, "w") as log_file:
                     for handler in logging.root.handlers[:]:
@@ -145,13 +144,14 @@ def main():
                     for issue in issues:
                         logging.debug(f"Issue: {issue}")
 
-    # Display Download Buttons if validation has been completed
+    # Tampilkan Tombol Unduh jika validasi telah selesai
     if st.session_state.get('validation_completed', False):
         if 'csv_output' in st.session_state:
             st.download_button("Download Validation Report (CSV)", st.session_state['csv_output'], file_name="validation_report.csv")
         if 'ppt_output' in st.session_state:
-            st.download_button("Download Highlighted PPT", st.session_state['ppt_output'],file_name="highlighted_presentation.pptx")
-       # Display Logs
+            st.download_button("Download Highlighted PPT", st.session_state['ppt_output'], file_name="highlighted_presentation.pptx")
+
+        # Tampilkan Log
         log_output_path = st.session_state.get('log_output_path', None)
         if log_output_path and Path(log_output_path).exists():
             with open(log_output_path, "r") as log_file:
