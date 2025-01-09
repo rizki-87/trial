@@ -3,7 +3,7 @@
 PREDEFINED_PASSWORD = "securepassword123"  
   
 TECHNICAL_TERMS = {  
-    "23-Sep", "dt", "Nov", "FY20", "FY21", "eriod", "PPC", "Baorong", "22-May", "22-Dec", "23-Feb", "outturn", "11m23", 
+    "23-Sep", "dt", "Nov", "FY20", "FY21", "eriod", "PPC", "Baorong", "22-May", "22-Dec", "23-Feb", "outturn", "11m23", "€", 
     "NWC", "payables", "Q", "illustrative", "VDR", "Srl", "Sep23A", "cont", "SKU", "Normalised", "Jul22A", "Jul23A", 
     "Sep22A", "Ene", "rgy", "Jun23A", "Adj", "accruals", "MBO", "FY23", "0m", "recuring", "DC", "OctA22", "adj", "EUR", "IFRS", 
     "R", "COVID19", "Unabsorbed", "unabsorbed", "FX", "G", "EPC", "indemnities", "DD", "Accruals", "EOSB", "St", "Yorre", "adequacy", 
