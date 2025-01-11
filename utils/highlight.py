@@ -20,7 +20,7 @@ def highlight_ppt(input_ppt, output_ppt, issues):
                 if shape.has_text_frame:
                     for paragraph in shape.text_frame.paragraphs:
                         for run in paragraph.runs:
-                            if issue['text'] in run.text:
+                            if issue.get('text', '') in run.text:  # Gunakan .get() untuk menghindari KeyError
                                 run.font.color.rgb = RGBColor(255, 255, 0)  # Highlight in yellow
 
     # Save the highlighted presentation
@@ -40,9 +40,9 @@ def save_to_csv(issues, output_csv):
         for issue in issues:
             if isinstance(issue, dict):
                 writer.writerow({
-                    'slide': issue['slide'],
-                    'issue': issue['issue'],
-                    'text': issue['text'],
+                    'slide': issue.get('slide', ''),  # Gunakan .get() untuk menghindari KeyError
+                    'issue': issue.get('issue', ''),
+                    'text': issue.get('text', ''),
                     'corrected': issue.get('corrected', ''),
                     'details': issue.get('details', '')
                 })
