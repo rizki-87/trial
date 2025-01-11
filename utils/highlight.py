@@ -1,6 +1,10 @@
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 import csv
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def highlight_ppt(input_ppt, output_ppt, issues):
     """
@@ -39,10 +43,12 @@ def save_to_csv(issues, output_csv):
         writer.writeheader()
         for issue in issues:
             if isinstance(issue, dict):
+                # Tambahkan logging untuk memeriksa isi issue
+                logging.debug(f"Issue: {issue}")  # Log isi dari issue
                 writer.writerow({
                     'slide': issue.get('slide', ''),  # Gunakan .get() untuk menghindari KeyError
                     'issue': issue.get('issue', ''),
-                    'text': issue.get('text', ''),
+                    'text': issue.get('text', 'N/A'),  # Ganti dengan 'N/A' jika tidak ada
                     'corrected': issue.get('corrected', ''),
                     'details': issue.get('details', '')
                 })
