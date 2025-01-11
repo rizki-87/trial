@@ -26,20 +26,21 @@ def validate_million_notations(slide, slide_index, notation='m'):
                 for match in matches:
                     notation_set.add(match.strip())
     
-    # Cek konsistensi notasi
-    if len(notation_set) > 1:
-        for match in all_matches:
-            issues.append({
-                'slide': slide_index,
-                'issue': 'Inconsistent Million Notations',
-                'text': match,
-                'details': f'Found inconsistent million notations: [using {", ".join(notation_set)}]'
-            })
-    elif len(notation_set) == 0:
-        issues.append({
-            'slide': slide_index,
-            'issue': 'No Million Notation Found',
-            'details': f'Expected notation: {notation}'
-        })
+    # Cek konsistensi notasi hanya jika ada notasi yang ditemukan
+    if notation_set:
+        if len(notation_set) > 1:
+            for match in all_matches:
+                issues.append({
+                    'slide': slide_index,
+                    'issue': 'Inconsistent Million Notations',
+                    'text': match,
+                    'details': f'Found inconsistent million notations: [using {", ".join(notation_set)}]'
+                })
+        else:
+            # Jika hanya satu notasi ditemukan, tidak perlu mencatat masalah
+            logging.debug(f"Slide {slide_index}: Consistent notation found: {notation_set}")
+    else:
+        # Jika tidak ada notasi ditemukan, tidak perlu mencatat masalah
+        logging.debug(f"Slide {slide_index}: No million notation found.")
 
     return issues
