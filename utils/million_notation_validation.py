@@ -1,5 +1,6 @@
-   import re  
-   import logging  
+import re  
+import logging  
+import pandas as pd
   
    def validate_million_notations_with_pandas(df, notation='m'):  
        issues = []  
