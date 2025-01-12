@@ -24,7 +24,8 @@ def validate_million_notations(slide, slide_index, notation='m'):
             continue  # Skip shapes that do not have text frames
         for paragraph in shape.text_frame.paragraphs:
             for run in paragraph.runs:
-                matches = re.findall(pattern, run.text, re.IGNORECASE)  # Find matches based on the pattern
+                # Find matches based on the pattern
+                matches = re.findall(pattern, run.text, re.IGNORECASE)  
                 all_matches.extend(matches)  # Collect all matches found
                 for match in matches:
                     notation_set.add(match.strip())  # Add the match to the notation set
