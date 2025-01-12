@@ -26,10 +26,14 @@ def validate_million_notations(slide, slide_index, notation='m'):
                 all_matches.extend(matches)  # Kumpulkan semua match yang ditemukan  
                 for match in matches:  
                     notation_set.add(match.strip())  # Tambahkan match ke set notasi  
-      
+  
+    # Log semua notasi yang ditemukan  
+    logging.debug(f"Slide {slide_index}: Found notations: {notation_set}")  
+  
     # Periksa konsistensi notasi hanya jika ada notasi yang ditemukan  
     if notation_set:  
-        if len(notation_set) > 1 or (notation.lower() == 'mn' and 'm' in notation_set):  
+        # Cek apakah ada notasi yang berbeda dari yang dipilih  
+        if any((n.lower() != notation.lower() for n in notation_set)):  
             for match in all_matches:  
                 issues.append({  
                     'slide': slide_index,  
