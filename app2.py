@@ -17,7 +17,7 @@ from utils.font_validation import validate_fonts_slide
 from utils.grammar_validation import initialize_language_tool, validate_grammar_slide      
 from utils.spelling_validation import is_exempted, validate_spelling_slide      
 from utils.decimal_validation import validate_decimal_consistency      
-from utils.million_notation_validation import validate_million_notations_with_pandas  # Ganti dengan fungsi baru      
+from utils.million_notation_validation import validate_million_notations_with_pandas      
 from utils.validation import validate_tables, validate_charts      
 from config import PREDEFINED_PASSWORD, TECHNICAL_TERMS, NUMERIC_TERMS      
   
