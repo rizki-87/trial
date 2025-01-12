@@ -10,7 +10,8 @@ import re
 import string      
 from pptx.dml.color import RGBColor      
 import logging      
-import time      
+import time
+import pandas as pd  
 from pydantic import BaseModel      
 from utils.highlight import highlight_ppt, save_to_csv      
 from utils.font_validation import validate_fonts_slide      
