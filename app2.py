@@ -22,10 +22,9 @@ from utils.million_notation_validation import validate_million_notations_with_sp
 from utils.validation import validate_tables, validate_charts        
 from config import PREDEFINED_PASSWORD, TECHNICAL_TERMS, NUMERIC_TERMS        
 import spacy  
-  
-   try:  
-       nlp = spacy.load("en_core_web_sm")  
-   except OSError:  
+try:  
+    nlp = spacy.load("en_core_web_sm")  
+except OSError:  
        st.error("Model 'en_core_web_sm' tidak ditemukan. Pastikan model telah diunduh.")  
 
   
