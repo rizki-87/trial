@@ -75,18 +75,23 @@ def validate_slide(slide, slide_index, default_font, spell, grammar_tool, decima
     # Validate Decimal Consistency      
     slide_issues.extend(validate_decimal_consistency(slide, slide_index + 1, decimal_places))      
   
-    # Validasi Notasi Juta menggunakan DataFrame  
-    slide_issues.extend(validate_million_notations_with_pandas(slide, slide_index + 1, selected_notation))  # Memasukkan selected_notation      
+    # Mengambil teks dari slide untuk validasi notasi juta  
+    slide_text = []  
+    for shape in slide.shapes:  
+        if shape.has_text_frame:  
+            for paragraph in shape.text_frame.paragraphs:  
+                for run in paragraph.runs:  
+                    slide_text.append(run.text)  
+    df = pd.DataFrame(slide_text, columns=['text'])  # Membuat DataFrame dari teks slide  
   
-    # Validate Tables      
-    slide_issues.extend(validate_tables(slide, slide_index + 1, selected_notation))  # Memasukkan selected_notation      
-    # Validate Charts      
-    slide_issues.extend(validate_charts(slide, slide_index + 1, selected_notation))  # Memasukkan selected_notation      
+    # Validasi Notasi Juta  
+    slide_issues.extend(validate_million_notations_with_pandas(df, selected_notation))  # Memasukkan selected_notation      
   
     elapsed_time = time.time() - start_time      
     logging.debug(f"Slide {slide_index + 1} validation completed in {elapsed_time:.2f} seconds.")      
   
     return slide_issues    
+  
   
 def main():      
     if not password_protection():      
@@ -178,87 +183,5 @@ if __name__ == "__main__":
     main()   
 
 
-# import streamlit as st  
-# import tempfile  
-# from pathlib import Path  
-# from pptx import Presentation  
-# import pandas as pd  
-# import logging  
-# from utils.highlight import highlight_ppt, save_to_csv  
-# from utils.font_validation import validate_fonts_slide  
-# from utils.grammar_validation import initialize_language_tool, validate_grammar_slide  
-# from utils.spelling_validation import validate_spelling_slide  
-# from utils.decimal_validation import validate_decimal_consistency  
-# from utils.million_notation_validation import validate_million_notations_with_pandas  
-# from config import PREDEFINED_PASSWORD, TECHNICAL_TERMS, NUMERIC_TERMS  
-  
-# # Configure logging  
-# logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')  
-  
-# def password_protection():  
-#     if "authenticated" not in st.session_state:  
-#         st.session_state.authenticated = False  
-#     if not st.session_state.authenticated:  
-#         with st.form("password_form", clear_on_submit=True):  
-#             password_input = st.text_input("Enter Password", type="password")  
-#             submitted = st.form_submit_button("Submit")  
-#             if submitted and password_input == PREDEFINED_PASSWORD:  
-#                 st.session_state.authenticated = True  
-#                 st.success("Access Granted! Please click 'Submit' again to proceed.")  
-#             elif submitted:  
-#                 st.error("Incorrect Password")  
-#         return False  
-#     return True  
-  
-# def extract_text_from_ppt(ppt_file):  
-#     text_data = []  
-#     presentation = Presentation(ppt_file)  
-  
-#     for slide in presentation.slides:  
-#         slide_text = []  
-#         for shape in slide.shapes:  
-#             if shape.has_text_frame:  
-#                 for paragraph in shape.text_frame.paragraphs:  
-#                     for run in paragraph.runs:  
-#                         slide_text.append(run.text)  
-#         text_data.append(" ".join(slide_text))  # Gabungkan teks dalam satu slide  
-  
-#     return pd.DataFrame(text_data, columns=['text'])  # Kembalikan DataFrame  
-  
-# def main():  
-#     if not password_protection():  
-#         return  
-  
-#     st.title("PPT Validator")  
-#     uploaded_file = st.file_uploader("Upload a PowerPoint file", type=["pptx"])  
-#     font_options = ["Arial", "Calibri", "Times New Roman", "Verdana", "Helvetica", "EYInterstate"]  
-#     default_font = st.selectbox("Select the default font for validation", font_options)  
-#     decimal_places = st.number_input("Enter the number of decimal places for validation", min_value=0, max_value=10, value=1)  
-#     notation_options = ["m", "M", "Mn"]  
-#     selected_notation = st.selectbox("Select Notation for Validation", notation_options)  
-  
-#     validation_option = st.radio("Validation Option:", ["All Slides", "Custom Range"])  
-  
-#     if uploaded_file:  
-#         with tempfile.TemporaryDirectory() as tmpdir:  
-#             temp_ppt_path = Path(tmpdir) / "uploaded_ppt.pptx"  
-#             with open(temp_ppt_path, "wb") as f:  
-#                 f.write(uploaded_file.getbuffer())  
-  
-#             # Ekstrak teks dari PowerPoint  
-#             df = extract_text_from_ppt(temp_ppt_path)  
-  
-#             # Validasi notasi juta menggunakan DataFrame  
-#             issues = validate_million_notations_with_pandas(df, selected_notation)  
-  
-#             # Tampilkan hasil validasi  
-#             if issues:  
-#                 st.write("Issues found:")  
-#                 for issue in issues:  
-#                     st.write(f"Slide {issue['slide']}: {issue['issue']} - {issue['text']}")  
-#             else:  
-#                 st.success("No issues found with million notations.")  
-  
-# if __name__ == "__main__":  
-#     main()  
+
 
