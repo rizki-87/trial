@@ -21,8 +21,9 @@ def validate_million_notations(slide, slide_index, notation='m'):
             continue  # Lewati bentuk yang tidak memiliki frame teks  
         for paragraph in shape.text_frame.paragraphs:  
             for run in paragraph.runs:  
-                # Temukan match berdasarkan pola  
+                logging.debug(f"Checking text: {run.text}")  # Log teks yang sedang diperiksa  
                 matches = re.findall(pattern, run.text, re.IGNORECASE)    
+                logging.debug(f"Matches found: {matches}")  # Log hasil match  
                 all_matches.extend(matches)  # Kumpulkan semua match yang ditemukan  
                 for match in matches:  
                     notation_set.add(match.strip())  # Tambahkan match ke set notasi  
