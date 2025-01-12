@@ -6,11 +6,14 @@ def validate_million_notations(slide, slide_index, notation='m'):
     
     # Determine the regex pattern based on the selected notation
     if notation.lower() == 'm':
-        pattern = r'[\€\$]?\s*\d+[\.,]?\d*\s?m\b'  # Allow currency symbols and optional space before 'm'
+        # Allow currency symbols, optional spaces, and flexible number formats for 'm'
+        pattern = r'[\€\$]?\s*\d{1,3}(?:\.\d{3})*(?:,\d+)?\s?[mM]\b'  
     elif notation.lower() == 'mn':
-        pattern = r'[\€\$]?\s*\d+[\.,]?\d*\s?Mn\b'  # Allow currency symbols and optional space before 'Mn'
+        # Allow currency symbols, optional spaces, and flexible number formats for 'Mn'
+        pattern = r'[\€\$]?\s*\d{1,3}(?:\.\d{3})*(?:,\d+)?\s?Mn\b'  
     else:
-        pattern = r'[\€\$]?\s*\d+[\.,]?\d*\s?M\b'  # Default to 'M' with currency symbols
+        # Default to 'M' with currency symbols and flexible number formats
+        pattern = r'[\€\$]?\s*\d{1,3}(?:\.\d{3})*(?:,\d+)?\s?M\b'  
 
     notation_set = set()  # Set to store unique notations found
     all_matches = []  # List to store all matches found
