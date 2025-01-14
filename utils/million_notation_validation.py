@@ -41,13 +41,13 @@ import logging  # Pastikan ini ada
 def validate_million_notations(slide, slide_index):  
     issues = []  
     million_patterns = {  
-        r'\b\d+M\b': 'M',   
-        r'\b\d+\s?Million\b': 'Million',   
-        r'\b\d+mn\b': 'mn',   
-        r'\b\d+\sm\b': 'm',  
-        r'\b\d+MM\b': 'MM',   
-        r'\b\d+\s?Millions\b': 'Millions',   
-        r'\b\d+\s?Juta\b': 'Juta'  
+        r'\b[€$£]?\s*\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*[Mm]\b': 'M',  # M atau m  
+        r'\b[€$£]?\s*\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*Million\b': 'Million',   
+        r'\b[€$£]?\s*\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*mn\b': 'mn',   
+        r'\b[€$£]?\s*\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*m\b': 'm',  
+        r'\b[€$£]?\s*\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*MM\b': 'MM',   
+        r'\b[€$£]?\s*\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*Millions\b': 'Millions',   
+        r'\b[€$£]?\s*\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*Juta\b': 'Juta'  
     }  
     notation_set = set()  
     all_matches = []  
