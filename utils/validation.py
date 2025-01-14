@@ -2,12 +2,7 @@ import re
 import logging        
 import string        
 import pandas as pd  # Pastikan pandas diimpor    
-import spacy  # Impor spaCy    
 from utils.spelling_validation import validate_spelling_slide, validate_spelling_in_text        
-from utils.million_notation_validation import validate_million_notations  # Ganti dengan fungsi baru        
-  
-# Muat model bahasa Inggris    
-nlp = spacy.load("en_core_web_sm")    
   
 def validate_tables(slide, slide_index):  # Hapus selected_notation dari parameter  
     issues = []        
