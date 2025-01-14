@@ -35,6 +35,9 @@
 #             })  
 #     return issues  
 
+import re  
+import logging  # Pastikan ini ada  
+  
 def validate_million_notations(slide, slide_index):  
     issues = []  
     million_patterns = {  
@@ -72,4 +75,3 @@ def validate_million_notations(slide, slide_index):
                 'details': f'Found inconsistent million notations: [using {", ".join(notation_set)}]'  
             })  
     return issues  
-
