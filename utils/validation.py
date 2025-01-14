@@ -5,7 +5,7 @@ import pandas as pd  # Pastikan pandas diimpor
 from utils.spelling_validation import validate_spelling_slide, validate_spelling_in_text        
 from utils.million_notation_validation import validate_million_notations  # Pastikan ini ada  
   
-   def validate_tables(slide, slide_index):    
+def validate_tables(slide, slide_index):    
        issues = []        
        for shape in slide.shapes:        
            if shape.has_table:        
@@ -31,7 +31,7 @@ from utils.million_notation_validation import validate_million_notations  # Past
             
        return issues        
   
-   def validate_charts(slide, slide_index):    
+def validate_charts(slide, slide_index):    
        issues = []        
        for shape in slide.shapes:        
            if shape.has_chart:        
